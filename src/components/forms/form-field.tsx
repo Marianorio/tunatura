@@ -5,13 +5,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
-type FormFieldProps = {
+type FormFieldProps = React.ComponentProps<"input"> & {
   name: string
   label: string
-  placeholder?: string
-  type?: string
   required?: boolean
-  className?: string
 }
 
 export function FormField({
@@ -21,6 +18,7 @@ export function FormField({
   type = "text",
   required = false,
   className,
+  ...props
 }: FormFieldProps) {
   const {
     register,
@@ -40,6 +38,7 @@ export function FormField({
         placeholder={placeholder}
         aria-invalid={!!error}
         {...register(name)}
+        {...props}
       />
       {error && (
         <p className="text-xs text-destructive">

@@ -1,12 +1,8 @@
-export default function ProductsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
-        <p className="text-sm text-muted-foreground">
-           Gestiona tu catálogo de productos Natura
-        </p>
-      </div>
-    </div>
-  )
+import { getProducts } from "@/server/products"
+import { ProductList } from "@/components/dashboard/product-list"
+
+export default async function ProductsPage() {
+  const products = await getProducts()
+
+  return <ProductList products={products} />
 }

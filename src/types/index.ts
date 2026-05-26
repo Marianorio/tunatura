@@ -1,3 +1,5 @@
+import type { Product } from "@prisma/client"
+
 export type NavLink = {
   label: string
   href: string
@@ -26,3 +28,15 @@ export type DashboardCardProps = {
 }
 
 export type SidebarState = "expanded" | "collapsed"
+
+export type ProductFormData = {
+  name: string
+  description?: string
+  price: number
+  costPrice?: number
+  category?: string
+  stock: number
+  image?: string
+}
+
+export type ProductWithRelations = Product
