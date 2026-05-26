@@ -1,0 +1,100 @@
+"use server"
+
+import { revalidatePath } from "next/cache"
+import { auth } from "@/server/auth"
+import { db } from "@/server/db"
+
+export type OrderFormData = {
+  customerId: string
+  notes?: string
+  items: { productId: string; quantity: number; unitPrice: number }[]
+}
+
+export async function getOrders() {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  return db.order.findMany({
+    where: { userId: session.user.id },
+    include: { customer: true, items: { include: { product: true } } },
+    orderBy: { createdAt: "desc" },
+  })
+}
+
+export async function getOrder(id: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  return db.order.findFirst({
+    where: { id, userId: session.user.id },
+    include: { customer: true, items: { include: { product: true } } },
+  })
+}
+
+export async function createOrder(data: OrderFormData) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  const subtotals = data.items.map(
+    (item) => item.quantity * item.unitPrice
+  )
+  const total = subtotals.reduce((sum, s) => sum + s, 0)
+
+  const count = await db.order.count({ where: { userId: session.user.id } })
+  const orderNumber = `ORD-${String(count + 1).padStart(4, "0")}`
+
+  const order = await db.order.create({
+    data: {
+      orderNumber,
+      customerId: data.customerId,
+      userId: session.user.id,
+      status: "pending",
+      total,
+      notes: data.notes ?? null,
+      items: {
+        create: data.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.quantity * item.unitPrice,
+        })),
+      },
+    },
+    include: { customer: true, items: { include: { product: true } } },
+  })
+
+  revalidatePath("/dashboard/orders")
+  return order
+}
+
+export async function updateOrderStatus(id: string, status: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  const order = await db.order.findFirst({
+    where: { id, userId: session.user.id },
+  })
+  if (!order) throw new Error("Pedido no encontrado")
+
+  const updated = await db.order.update({
+    where: { id },
+    data: { status },
+    include: { customer: true, items: { include: { product: true } } },
+  })
+
+  revalidatePath("/dashboard/orders")
+  return updated
+}
+
+export async function deleteOrder(id: string) {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  const order = await db.order.findFirst({
+    where: { id, userId: session.user.id },
+  })
+  if (!order) throw new Error("Pedido no encontrado")
+
+  await db.order.delete({ where: { id } })
+  revalidatePath("/dashboard/orders")
+}

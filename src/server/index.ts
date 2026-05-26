@@ -15,3 +15,10 @@ export {
   updateCustomer,
   deleteCustomer,
 } from "./customers"
+export {
+  getOrders,
+  getOrder,
+  createOrder,
+  updateOrderStatus,
+  deleteOrder,
+} from "./orders"

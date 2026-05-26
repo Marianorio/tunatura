@@ -1,0 +1,206 @@
+"use client"
+
+import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Trash2, Plus, ShoppingCart } from "lucide-react"
+import type { Customer, Product, Prisma } from "@prisma/client"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { OrderForm, type OrderFormValues } from "@/components/forms/order-form"
+import { createOrder, updateOrderStatus, deleteOrder } from "@/server/orders"
+import { toast } from "sonner"
+
+type OrderWithRelations = Prisma.OrderGetPayload<{
+  include: { customer: true; items: { include: { product: true } } }
+}>
+
+const statusLabels: Record<string, string> = {
+  pending: "Pendiente",
+  confirmed: "Confirmado",
+  delivered: "Entregado",
+  cancelled: "Cancelado",
+}
+
+const statusVariants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+  pending: "secondary",
+  confirmed: "default",
+  delivered: "outline",
+  cancelled: "destructive",
+}
+
+export function OrderList({
+  orders: initial,
+  customers,
+  products,
+}: {
+  orders: OrderWithRelations[]
+  customers: Pick<Customer, "id" | "name">[]
+  products: Pick<Product, "id" | "name" | "price">[]
+}) {
+  const router = useRouter()
+  const [orders, setOrders] = useState(initial)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const refresh = useCallback(() => {
+    router.refresh()
+  }, [router])
+
+  async function handleCreate(values: OrderFormValues) {
+    setIsSubmitting(true)
+    try {
+      await createOrder(values)
+      toast.success("Pedido creado correctamente")
+      setIsDialogOpen(false)
+      refresh()
+    } catch {
+      toast.error("Error al crear el pedido")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function handleStatusChange(id: string, status: string) {
+    try {
+      await updateOrderStatus(id, status)
+      toast.success("Estado actualizado")
+      refresh()
+    } catch {
+      toast.error("Error al actualizar el estado")
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("¿Estás seguro de eliminar este pedido?")) return
+    try {
+      await deleteOrder(id)
+      toast.success("Pedido eliminado correctamente")
+      refresh()
+    } catch {
+      toast.error("Error al eliminar el pedido")
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
+          <p className="text-sm text-muted-foreground">
+            Seguimiento de todos los pedidos realizados
+          </p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            Nuevo pedido
+          </Button>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Nuevo pedido</DialogTitle>
+              <DialogDescription>
+                Crea un nuevo pedido seleccionando cliente y productos
+              </DialogDescription>
+            </DialogHeader>
+            <OrderForm
+              customers={customers}
+              products={products}
+              onSubmit={handleCreate}
+              isSubmitting={isSubmitting}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+          <ShoppingCart className="mb-4 size-12 text-muted-foreground/50" />
+          <h3 className="text-lg font-medium">No hay pedidos</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Crea tu primer pedido para empezar
+          </p>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            Nuevo pedido
+          </Button>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="px-4 py-3 text-left text-sm font-medium">Pedido</th>
+                <th className="px-4 py-3 text-left text-sm font-medium">Cliente</th>
+                <th className="px-4 py-3 text-left text-sm font-medium">Productos</th>
+                <th className="px-4 py-3 text-right text-sm font-medium">Total</th>
+                <th className="px-4 py-3 text-center text-sm font-medium">Estado</th>
+                <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-mono font-medium">
+                      {order.orderNumber}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">{order.customer.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {order.items.map((i) => i.product.name).join(", ")}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-medium">
+                    ${Number(order.total).toFixed(2)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Select
+                      value={order.status ?? "pending"}
+                      onValueChange={(v) => handleStatusChange(order.id, v ?? "pending")}
+                    >
+                      <SelectTrigger className="h-7 w-fit gap-1 border-0 px-2 text-xs font-medium">
+                        <Badge variant={statusVariants[order.status] ?? "secondary"}>
+                          <SelectValue />
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(statusLabels).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(order.id)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}

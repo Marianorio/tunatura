@@ -1,12 +1,25 @@
-export default function OrdersPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
-        <p className="text-sm text-muted-foreground">
-           Seguimiento de todos los pedidos realizados
-        </p>
-      </div>
-    </div>
-  )
+import { getOrders } from "@/server/orders"
+import { db } from "@/server/db"
+import { auth } from "@/server/auth"
+import { OrderList } from "@/components/dashboard/order-list"
+
+export default async function OrdersPage() {
+  const session = await auth()
+  const userId = session?.user?.id
+
+  const [orders, customers, products] = await Promise.all([
+    getOrders(),
+    db.customer.findMany({
+      where: { userId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    db.product.findMany({
+      where: { userId, isActive: true },
+      select: { id: true, name: true, price: true },
+      orderBy: { name: "asc" },
+    }),
+  ])
+
+  return <OrderList orders={orders} customers={customers} products={products} />
 }
