@@ -4,7 +4,7 @@ export default function CustomersPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
         <p className="text-sm text-muted-foreground">
-          Gerencie sua base de clientes
+           Gestiona tu base de clientes
         </p>
       </div>
     </div>

@@ -13,12 +13,12 @@ export default function AuthError({
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <AlertCircle className="size-12 text-destructive" />
-      <h2 className="text-xl font-semibold">Erro de autenticação</h2>
+      <h2 className="text-xl font-semibold">Error de autenticación</h2>
       <p className="text-sm text-muted-foreground">
-        {error.message ?? "Não foi possível autenticar."}
+        {error.message ?? "No fue posible autenticar."}
       </p>
       <Button onClick={unstable_retry} variant="outline">
-        Tentar novamente
+        Intentar de nuevo
       </Button>
     </div>
   )

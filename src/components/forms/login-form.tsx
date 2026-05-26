@@ -21,7 +21,7 @@ export function LoginForm() {
         <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold">
           TN
         </div>
-        <CardTitle className="text-xl">Bem-vindo ao {APP_NAME}</CardTitle>
+        <CardTitle className="text-xl">Bienvenido a {APP_NAME}</CardTitle>
         <CardDescription>{APP_DESCRIPTION}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -53,7 +53,7 @@ export function LoginForm() {
               />
             </svg>
           )}
-          Entrar com Google
+          Iniciar sesión con Google
         </Button>
       </CardContent>
     </Card>

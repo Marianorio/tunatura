@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Tu Natura",
     default: "Tu Natura",
   },
-  description: "Plataforma profissional para consultores Natura independentes",
+  description: "Plataforma profesional para consultores Natura independientes",
 }
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="pt-BR"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >

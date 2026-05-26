@@ -71,7 +71,7 @@ export function UserMenu() {
             onClick={() => window.location.href = "/dashboard/settings"}
           >
             <Settings className="mr-2 size-4" />
-            Configurações
+            Configuración
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -85,7 +85,7 @@ export function UserMenu() {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setTheme("dark")}>
             <Moon className="mr-2 size-4" />
-            Escuro
+            Oscuro
             {theme === "dark" && (
               <span className="ml-auto text-xs text-muted-foreground">✓</span>
             )}
@@ -104,7 +104,7 @@ export function UserMenu() {
           className="text-destructive"
         >
           <LogOut className="mr-2 size-4" />
-          Sair
+          Cerrar sesión
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

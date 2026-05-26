@@ -18,12 +18,12 @@ export default function DashboardError({
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16">
       <AlertCircle className="size-12 text-destructive" />
-      <h2 className="text-xl font-semibold">Algo deu errado</h2>
+      <h2 className="text-xl font-semibold">Algo salió mal</h2>
       <p className="text-sm text-muted-foreground">
-        {error.message ?? "Ocorreu um erro inesperado."}
+        {error.message ?? "Ocurrió un error inesperado."}
       </p>
       <Button onClick={unstable_retry} variant="outline">
-        Tentar novamente
+        Intentar de nuevo
       </Button>
     </div>
   )

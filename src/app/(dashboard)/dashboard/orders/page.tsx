@@ -4,7 +4,7 @@ export default function OrdersPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
         <p className="text-sm text-muted-foreground">
-          Acompanhe todos os pedidos realizados
+           Seguimiento de todos los pedidos realizados
         </p>
       </div>
     </div>

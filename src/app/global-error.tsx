@@ -14,12 +14,12 @@ export default function GlobalError({
       <body>
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
           <AlertCircle className="size-12 text-destructive" />
-          <h1 className="text-2xl font-semibold">Erro crítico</h1>
+          <h1 className="text-2xl font-semibold">Error crítico</h1>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            Ocorreu um erro inesperado. Por favor, tente novamente.
+            Ocurrió un error inesperado. Por favor, inténtalo de nuevo.
           </p>
           <Button onClick={unstable_retry} variant="outline">
-            Tentar novamente
+            Intentar de nuevo
           </Button>
         </div>
       </body>

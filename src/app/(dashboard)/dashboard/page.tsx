@@ -10,7 +10,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Bem-vindo de volta, {session?.user?.name ?? "consultor"}!
+          Bienvenido de nuevo, {session?.user?.name ?? "consultor"}!
         </p>
       </div>
 
@@ -18,25 +18,25 @@ export default async function DashboardPage() {
         <DashboardCard
           title="Produtos"
           value="0"
-          description="Total de produtos cadastrados"
+          description="Total de productos registrados"
           icon={<PackageIcon />}
         />
         <DashboardCard
           title="Clientes"
           value="0"
-          description="Total de clientes ativos"
+          description="Total de clientes activos"
           icon={<UsersIcon />}
         />
         <DashboardCard
           title="Pedidos"
           value="0"
-          description="Pedidos este mês"
+          description="Pedidos este mes"
           icon={<ShoppingCartIcon />}
         />
         <DashboardCard
           title="Vendas"
           value="R$ 0"
-          description="Faturamento total"
+          description="Facturación total"
           icon={<TrendingUpIcon />}
         />
       </div>

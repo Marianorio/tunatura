@@ -137,7 +137,7 @@ export function Sidebar({
             >
               <path d="M15 18l-6-6 6-6" />
             </svg>
-            <span>Recolher</span>
+            <span>Contraer</span>
           </Button>
         )}
       </div>
