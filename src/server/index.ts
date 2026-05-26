@@ -8,3 +8,10 @@ export {
   deleteProduct,
   toggleProductStatus,
 } from "./products"
+export {
+  getCustomers,
+  getCustomer,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+} from "./customers"

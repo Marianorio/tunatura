@@ -1,12 +1,8 @@
-export default function CustomersPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
-        <p className="text-sm text-muted-foreground">
-           Gestiona tu base de clientes
-        </p>
-      </div>
-    </div>
-  )
+import { getCustomers } from "@/server/customers"
+import { CustomerList } from "@/components/dashboard/customer-list"
+
+export default async function CustomersPage() {
+  const customers = await getCustomers()
+
+  return <CustomerList customers={customers} />
 }
