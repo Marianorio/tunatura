@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Pencil, Trash2, Plus, Users } from "lucide-react"
+import { Pencil, Trash2, Plus, Users, Search } from "lucide-react"
 import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -19,9 +20,23 @@ import { toast } from "sonner"
 export function CustomerList({ customers: initial }: { customers: Customer[] }) {
   const router = useRouter()
   const [customers, setCustomers] = useState(initial)
+  const [search, setSearch] = useState("")
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const filtered = useMemo(
+    () =>
+      customers.filter((c) => {
+        const q = search.toLowerCase()
+        return (
+          c.name.toLowerCase().includes(q) ||
+          (c.email ?? "").toLowerCase().includes(q) ||
+          (c.phone ?? "").toLowerCase().includes(q)
+        )
+      }),
+    [customers, search]
+  )
 
   const refresh = useCallback(() => {
     router.refresh()
@@ -80,11 +95,11 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona tu base de clientes
+            Gestiona tu base de clientes ({filtered.length} de {customers.length})
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -112,17 +127,33 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
         </Dialog>
       </div>
 
-      {customers.length === 0 ? (
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar clientes..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Users className="mb-4 size-12 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium">No hay clientes</h3>
+          <h3 className="text-lg font-medium">
+            {search ? "Sin resultados" : "No hay clientes"}
+          </h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Agrega tu primer cliente para empezar
+            {search
+              ? "Intenta con otro término de búsqueda"
+              : "Agrega tu primer cliente para empezar"}
           </p>
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 size-4" />
-            Nuevo cliente
-          </Button>
+          {!search && (
+            <Button onClick={openCreate}>
+              <Plus className="mr-2 size-4" />
+              Nuevo cliente
+            </Button>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border">
@@ -137,7 +168,7 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => (
+              {filtered.map((customer) => (
                 <tr key={customer.id} className="border-b last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3 text-sm font-medium">{customer.name}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">

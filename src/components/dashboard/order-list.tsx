@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Trash2, Plus, ShoppingCart } from "lucide-react"
+import { Trash2, Plus, ShoppingCart, Search } from "lucide-react"
 import type { Customer, Product, Prisma } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -53,8 +54,22 @@ export function OrderList({
 }) {
   const router = useRouter()
   const [orders, setOrders] = useState(initial)
+  const [search, setSearch] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const filtered = useMemo(
+    () =>
+      orders.filter((o) => {
+        const q = search.toLowerCase()
+        return (
+          o.orderNumber.toLowerCase().includes(q) ||
+          o.customer.name.toLowerCase().includes(q) ||
+          o.items.some((i) => i.product.name.toLowerCase().includes(q))
+        )
+      }),
+    [orders, search]
+  )
 
   const refresh = useCallback(() => {
     router.refresh()
@@ -97,11 +112,11 @@ export function OrderList({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
           <p className="text-sm text-muted-foreground">
-            Seguimiento de todos los pedidos realizados
+            Seguimiento de todos los pedidos realizados ({filtered.length} de {orders.length})
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -126,17 +141,33 @@ export function OrderList({
         </Dialog>
       </div>
 
-      {orders.length === 0 ? (
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar pedidos (número, cliente, producto)..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <ShoppingCart className="mb-4 size-12 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium">No hay pedidos</h3>
+          <h3 className="text-lg font-medium">
+            {search ? "Sin resultados" : "No hay pedidos"}
+          </h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Crea tu primer pedido para empezar
+            {search
+              ? "Intenta con otro término de búsqueda"
+              : "Crea tu primer pedido para empezar"}
           </p>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 size-4" />
-            Nuevo pedido
-          </Button>
+          {!search && (
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 size-4" />
+              Nuevo pedido
+            </Button>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border">
@@ -152,7 +183,7 @@ export function OrderList({
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {filtered.map((order) => (
                 <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <span className="text-sm font-mono font-medium">
@@ -160,7 +191,7 @@ export function OrderList({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">{order.customer.name}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
                     {order.items.map((i) => i.product.name).join(", ")}
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-medium">

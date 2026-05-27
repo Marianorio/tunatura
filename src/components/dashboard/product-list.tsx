@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { Pencil, Trash2, Plus, Package } from "lucide-react"
+import { Pencil, Trash2, Plus, Package, Search } from "lucide-react"
 import type { Product } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -16,13 +17,28 @@ import {
 import { ProductForm, type ProductFormValues } from "@/components/forms/product-form"
 import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from "@/server/products"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 export function ProductList({ products: initial }: { products: Product[] }) {
   const router = useRouter()
   const [products, setProducts] = useState(initial)
+  const [search, setSearch] = useState("")
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const filtered = useMemo(
+    () =>
+      products.filter((p) => {
+        const q = search.toLowerCase()
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.category ?? "").toLowerCase().includes(q) ||
+          (p.description ?? "").toLowerCase().includes(q)
+        )
+      }),
+    [products, search]
+  )
 
   const refresh = useCallback(() => {
     router.refresh()
@@ -90,11 +106,11 @@ export function ProductList({ products: initial }: { products: Product[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona tu catálogo de productos
+            Gestiona tu catálogo de productos ({filtered.length} de {products.length})
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -122,17 +138,33 @@ export function ProductList({ products: initial }: { products: Product[] }) {
         </Dialog>
       </div>
 
-      {products.length === 0 ? (
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar productos..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Package className="mb-4 size-12 text-muted-foreground/50" />
-          <h3 className="text-lg font-medium">No hay productos</h3>
+          <h3 className="text-lg font-medium">
+            {search ? "Sin resultados" : "No hay productos"}
+          </h3>
           <p className="mb-4 text-sm text-muted-foreground">
-            Agrega tu primer producto para empezar
+            {search
+              ? "Intenta con otro término de búsqueda"
+              : "Agrega tu primer producto para empezar"}
           </p>
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 size-4" />
-            Nuevo producto
-          </Button>
+          {!search && (
+            <Button onClick={openCreate}>
+              <Plus className="mr-2 size-4" />
+              Nuevo producto
+            </Button>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border">
@@ -148,7 +180,7 @@ export function ProductList({ products: initial }: { products: Product[] }) {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {filtered.map((product) => (
                 <tr key={product.id} className="border-b last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <div>
@@ -166,7 +198,7 @@ export function ProductList({ products: initial }: { products: Product[] }) {
                   <td className="px-4 py-3 text-right text-sm font-medium">
                     ${Number(product.price).toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm">
+                  <td className={cn("px-4 py-3 text-right text-sm", product.stock === 0 && "text-destructive")}>
                     {product.stock}
                   </td>
                   <td className="px-4 py-3 text-center">
