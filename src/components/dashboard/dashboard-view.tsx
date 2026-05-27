@@ -5,7 +5,34 @@ import { ShoppingCart, Package, Users, Plus, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { Order, Customer, Product } from "@prisma/client"
+
+type SerializedOrder = {
+  id: string
+  orderNumber: string
+  customerId: string
+  userId: string
+  status: string
+  total: number
+  notes: string | null
+  createdAt: Date
+  updatedAt: Date
+  customer: { id: string; name: string; email: string | null; phone: string | null; address: string | null; notes: string | null; userId: string; createdAt: Date; updatedAt: Date }
+}
+
+type SerializedProduct = {
+  id: string
+  name: string
+  price: number
+  costPrice: number | null
+  stock: number
+  isActive: boolean
+  category: string | null
+  description: string | null
+  image: string | null
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 const statusLabel: Record<string, string> = {
   pending: "Pendiente",
@@ -20,32 +47,30 @@ export function DashboardView({
   recentOrders,
   userName,
 }: {
-  pendingOrders: (Order & { customer: Customer })[]
-  lowStockProducts: Product[]
-  recentOrders: (Order & { customer: Customer })[]
+  pendingOrders: SerializedOrder[]
+  lowStockProducts: SerializedProduct[]
+  recentOrders: SerializedOrder[]
   userName: string
 }) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Bienvenido de nuevo, {userName}!
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/dashboard/orders"
-            className={cn(
-              "inline-flex h-8 items-center justify-center rounded-lg border border-border bg-background px-2.5 text-sm font-medium",
-              "hover:bg-muted hover:text-foreground transition-colors"
-            )}
-          >
-            <Plus className="mr-2 size-4" />
-            Nuevo pedido
-          </Link>
-        </div>
+        <Link
+          href="/dashboard/orders"
+          className={cn(
+            "inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-3 text-sm font-medium",
+            "hover:bg-muted hover:text-foreground transition-colors sm:h-8 sm:px-2.5"
+          )}
+        >
+          <Plus className="mr-2 size-4" />
+          Nuevo pedido
+        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -158,8 +183,8 @@ export function DashboardView({
           </Link>
         </div>
         {recentOrders.length > 0 ? (
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[400px]">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">
@@ -204,7 +229,7 @@ export function DashboardView({
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         <Link
           href="/dashboard/orders"
           className={cn(

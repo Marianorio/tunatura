@@ -82,9 +82,9 @@ export function OrderList({
   customers,
   products,
 }: {
-  orders: OrderWithRelations[]
+  orders: SerializedOrder[]
   customers: Pick<Customer, "id" | "name">[]
-  products: Pick<Product, "id" | "name" | "price">[]
+  products: { id: string; name: string; price: number }[]
 }) {
   const [orders, setOrders] = useState(initial)
   const [search, setSearch] = useState("")
@@ -207,13 +207,13 @@ export function OrderList({
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Pedido</th>
                 <th className="px-4 py-3 text-left text-sm font-medium">Cliente</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Productos</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Productos</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Total</th>
                 <th className="px-4 py-3 text-center text-sm font-medium">Estado</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
@@ -228,7 +228,7 @@ export function OrderList({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">{order.customer.name}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate md:table-cell">
                     {order.items.map((i) => i.product.name).join(", ")}
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-medium">

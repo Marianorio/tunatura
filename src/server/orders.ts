@@ -10,12 +10,12 @@ export type OrderFormData = {
   items: { productId: string; quantity: number; unitPrice: number }[]
 }
 
-function serializeOrder(order: Awaited<ReturnType<typeof db.order.findFirst>> & {}) {
+function serializeOrder(order: any) {
   if (!order) return null
   return {
     ...order,
     total: Number(order.total),
-    items: order.items.map((item) => ({
+    items: (order.items ?? []).map((item: any) => ({
       ...item,
       unitPrice: Number(item.unitPrice),
       subtotal: Number(item.subtotal),

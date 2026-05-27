@@ -89,10 +89,7 @@ export function SettingsView({ user }: { user?: User }) {
                   <Moon className="mr-2 size-4 inline" />
                   Oscuro
                 </SelectItem>
-                <SelectItem value="system">
-                  <Monitor className="mr-2 size-4 inline" />
-                  Sistema
-                </SelectItem>
+
               </SelectContent>
             </Select>
           </div>

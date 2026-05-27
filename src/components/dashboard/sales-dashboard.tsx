@@ -16,11 +16,24 @@ import {
 } from "recharts"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
 import { TrendingUpIcon, ShoppingCartIcon, DollarSignIcon, UsersIcon } from "lucide-react"
-import type { Order, Customer, Product, Prisma } from "@prisma/client"
 
-type OrderWithRelations = Prisma.OrderGetPayload<{
-  include: { customer: true; items: { include: { product: true } } }
-}>
+type SerializedProduct = {
+  id: string; name: string; price: number; costPrice: number | null; stock: number
+  isActive: boolean; category: string | null; description: string | null; image: string | null
+  userId: string; createdAt: Date; updatedAt: Date
+}
+
+type SerializedOrderItem = {
+  id: string; orderId: string; productId: string; quantity: number
+  unitPrice: number; subtotal: number; product: SerializedProduct
+}
+
+type SerializedOrder = {
+  id: string; orderNumber: string; customerId: string; userId: string
+  status: string; total: number; notes: string | null; createdAt: Date; updatedAt: Date
+  customer: { id: string; name: string; email: string | null; phone: string | null; address: string | null; notes: string | null; userId: string; createdAt: Date; updatedAt: Date }
+  items: SerializedOrderItem[]
+}
 
 const COLORS = ["hsl(var(--primary))", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"]
 
@@ -33,7 +46,7 @@ export function SalesDashboard({
   productCount,
   customerCount,
 }: {
-  orders: OrderWithRelations[]
+  orders: SerializedOrder[]
   productCount: number
   customerCount: number
 }) {

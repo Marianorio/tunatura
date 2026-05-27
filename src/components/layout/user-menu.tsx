@@ -17,7 +17,6 @@ import {
   User,
   Sun,
   Moon,
-  Monitor,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -90,13 +89,7 @@ export function UserMenu() {
               <span className="ml-auto text-xs text-muted-foreground">✓</span>
             )}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("system")}>
-            <Monitor className="mr-2 size-4" />
-            Sistema
-            {theme === "system" && (
-              <span className="ml-auto text-xs text-muted-foreground">✓</span>
-            )}
-          </DropdownMenuItem>
+
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

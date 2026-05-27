@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react"
 import { Pencil, Trash2, Plus, Package, Search } from "lucide-react"
-import type { Product } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -18,10 +17,25 @@ import { getProducts, createProduct, updateProduct, deleteProduct, toggleProduct
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-export function ProductList({ products: initial }: { products: Product[] }) {
+type SerializedProduct = {
+  id: string
+  name: string
+  price: number
+  costPrice: number | null
+  stock: number
+  isActive: boolean
+  category: string | null
+  description: string | null
+  image: string | null
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export function ProductList({ products: initial }: { products: SerializedProduct[] }) {
   const [products, setProducts] = useState(initial)
   const [search, setSearch] = useState("")
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editingProduct, setEditingProduct] = useState<SerializedProduct | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -97,7 +111,7 @@ export function ProductList({ products: initial }: { products: Product[] }) {
     }
   }
 
-  function openEdit(product: Product) {
+  function openEdit(product: SerializedProduct) {
     setEditingProduct(product)
     setIsDialogOpen(true)
   }
@@ -170,12 +184,12 @@ export function ProductList({ products: initial }: { products: Product[] }) {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[550px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Producto</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Categoría</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Categoría</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Precio</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Stock</th>
                 <th className="px-4 py-3 text-center text-sm font-medium">Estado</th>
@@ -188,14 +202,12 @@ export function ProductList({ products: initial }: { products: Product[] }) {
                   <td className="px-4 py-3">
                     <div>
                       <p className="text-sm font-medium">{product.name}</p>
-                      {product.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {product.description}
-                        </p>
-                      )}
+                      <p className="text-xs text-muted-foreground sm:hidden">
+                        {product.category ?? "Sin categoría"}
+                      </p>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
                     {product.category ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-medium">

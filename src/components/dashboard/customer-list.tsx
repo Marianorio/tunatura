@@ -158,25 +158,34 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full">
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
                 <th className="px-4 py-3 text-left text-sm font-medium">Teléfono</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Email</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Dirección</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((customer) => (
                 <tr key={customer.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3 text-sm font-medium">{customer.name}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {customer.phone ?? "—"}
+                  <td className="px-4 py-3 text-sm font-medium">
+                    {customer.name}
+                    <div className="text-xs text-muted-foreground sm:hidden">
+                      {customer.phone ?? "No especificado"} {customer.email ? `· ${customer.email}` : ""}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {customer.email ?? "—"}
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
+                    {customer.phone ?? "No especificado"}
+                  </td>
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
+                    {customer.email ?? "No especificado"}
+                  </td>
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
+                    {customer.address ?? "No especificado"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
