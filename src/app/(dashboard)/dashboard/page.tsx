@@ -28,9 +28,13 @@ export default async function DashboardPage() {
 
   return (
     <DashboardView
-      pendingOrders={pendingOrders}
-      lowStockProducts={lowStockProducts}
-      recentOrders={recentOrders}
+      pendingOrders={pendingOrders.map((o) => ({ ...o, total: Number(o.total) }))}
+      lowStockProducts={lowStockProducts.map((p) => ({
+        ...p,
+        price: Number(p.price),
+        costPrice: p.costPrice ? Number(p.costPrice) : null,
+      }))}
+      recentOrders={recentOrders.map((o) => ({ ...o, total: Number(o.total) }))}
       userName={session?.user?.name ?? "consultor"}
     />
   )

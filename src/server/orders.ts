@@ -10,25 +10,60 @@ export type OrderFormData = {
   items: { productId: string; quantity: number; unitPrice: number }[]
 }
 
+function serializeOrder(order: Awaited<ReturnType<typeof db.order.findFirst>> & {}) {
+  if (!order) return null
+  return {
+    ...order,
+    total: Number(order.total),
+    items: order.items.map((item) => ({
+      ...item,
+      unitPrice: Number(item.unitPrice),
+      subtotal: Number(item.subtotal),
+      product: {
+        ...item.product,
+        price: Number(item.product.price),
+        costPrice: item.product.costPrice ? Number(item.product.costPrice) : null,
+      },
+    })),
+  }
+}
+
 export async function getOrders() {
   const session = await auth()
   if (!session?.user?.id) throw new Error("No autorizado")
 
-  return db.order.findMany({
+  const orders = await db.order.findMany({
     where: { userId: session.user.id },
     include: { customer: true, items: { include: { product: true } } },
     orderBy: { createdAt: "desc" },
   })
+
+  return orders.map((o) => ({
+    ...o,
+    total: Number(o.total),
+    items: o.items.map((item) => ({
+      ...item,
+      unitPrice: Number(item.unitPrice),
+      subtotal: Number(item.subtotal),
+      product: {
+        ...item.product,
+        price: Number(item.product.price),
+        costPrice: item.product.costPrice ? Number(item.product.costPrice) : null,
+      },
+    })),
+  }))
 }
 
 export async function getOrder(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("No autorizado")
 
-  return db.order.findFirst({
+  const order = await db.order.findFirst({
     where: { id, userId: session.user.id },
     include: { customer: true, items: { include: { product: true } } },
   })
+
+  return serializeOrder(order)
 }
 
 export async function createOrder(data: OrderFormData) {
@@ -64,7 +99,7 @@ export async function createOrder(data: OrderFormData) {
   })
 
   revalidatePath("/dashboard/orders")
-  return order
+  return serializeOrder(order)
 }
 
 export async function updateOrderStatus(id: string, status: string) {
@@ -83,7 +118,7 @@ export async function updateOrderStatus(id: string, status: string) {
   })
 
   revalidatePath("/dashboard/orders")
-  return updated
+  return serializeOrder(updated)
 }
 
 export async function deleteOrder(id: string) {

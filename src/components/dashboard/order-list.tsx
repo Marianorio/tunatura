@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { Trash2, Plus, ShoppingCart, Search } from "lucide-react"
-import type { Customer, Product, Prisma } from "@prisma/client"
+import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -24,9 +24,44 @@ import { OrderForm, type OrderFormValues } from "@/components/forms/order-form"
 import { getOrders, createOrder, updateOrderStatus, deleteOrder } from "@/server/orders"
 import { toast } from "sonner"
 
-type OrderWithRelations = Prisma.OrderGetPayload<{
-  include: { customer: true; items: { include: { product: true } } }
-}>
+type SerializedProduct = {
+  id: string
+  name: string
+  price: number
+  costPrice: number | null
+  stock: number
+  isActive: boolean
+  category: string | null
+  description: string | null
+  image: string | null
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+type SerializedOrderItem = {
+  id: string
+  orderId: string
+  productId: string
+  quantity: number
+  unitPrice: number
+  subtotal: number
+  product: SerializedProduct
+}
+
+type SerializedOrder = {
+  id: string
+  orderNumber: string
+  customerId: string
+  userId: string
+  status: string
+  total: number
+  notes: string | null
+  createdAt: Date
+  updatedAt: Date
+  customer: Customer
+  items: SerializedOrderItem[]
+}
 
 const statusLabels: Record<string, string> = {
   pending: "Pendiente",

@@ -16,9 +16,24 @@ export default async function SalesPage() {
     db.customer.count({ where: { userId } }),
   ])
 
+  const serialized = orders.map((order) => ({
+    ...order,
+    total: Number(order.total),
+    items: order.items.map((item) => ({
+      ...item,
+      unitPrice: Number(item.unitPrice),
+      subtotal: Number(item.subtotal),
+      product: {
+        ...item.product,
+        price: Number(item.product.price),
+        costPrice: item.product.costPrice ? Number(item.product.costPrice) : null,
+      },
+    })),
+  }))
+
   return (
     <SalesDashboard
-      orders={orders}
+      orders={serialized}
       productCount={productCount}
       customerCount={customerCount}
     />

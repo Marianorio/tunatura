@@ -14,7 +14,11 @@ export async function getProducts() {
     orderBy: { createdAt: "desc" },
   })
 
-  return products
+  return products.map((p) => ({
+    ...p,
+    price: Number(p.price),
+    costPrice: p.costPrice ? Number(p.costPrice) : null,
+  }))
 }
 
 export async function getProduct(id: string) {
