@@ -19,9 +19,8 @@ import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-export function ProductList({ products: initial }: { products: Product[] }) {
+export function ProductList({ products }: { products: Product[] }) {
   const router = useRouter()
-  const [products, setProducts] = useState(initial)
   const [search, setSearch] = useState("")
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)

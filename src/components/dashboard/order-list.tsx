@@ -44,7 +44,7 @@ const statusVariants: Record<string, "default" | "secondary" | "outline" | "dest
 }
 
 export function OrderList({
-  orders: initial,
+  orders,
   customers,
   products,
 }: {
@@ -53,7 +53,6 @@ export function OrderList({
   products: Pick<Product, "id" | "name" | "price">[]
 }) {
   const router = useRouter()
-  const [orders, setOrders] = useState(initial)
   const [search, setSearch] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

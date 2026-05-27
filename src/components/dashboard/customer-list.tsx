@@ -17,9 +17,8 @@ import { CustomerForm, type CustomerFormValues } from "@/components/forms/custom
 import { createCustomer, updateCustomer, deleteCustomer } from "@/server/customers"
 import { toast } from "sonner"
 
-export function CustomerList({ customers: initial }: { customers: Customer[] }) {
+export function CustomerList({ customers }: { customers: Customer[] }) {
   const router = useRouter()
-  const [customers, setCustomers] = useState(initial)
   const [search, setSearch] = useState("")
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
