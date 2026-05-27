@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo } from "react"
 import { Pencil, Trash2, Plus, Package, Search } from "lucide-react"
 import type { Product } from "@prisma/client"
 import { Button } from "@/components/ui/button"
@@ -15,12 +14,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ProductForm, type ProductFormValues } from "@/components/forms/product-form"
-import { createProduct, updateProduct, deleteProduct, toggleProductStatus } from "@/server/products"
+import { getProducts, createProduct, updateProduct, deleteProduct, toggleProductStatus } from "@/server/products"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-export function ProductList({ products }: { products: Product[] }) {
-  const router = useRouter()
+export function ProductList({ products: initial }: { products: Product[] }) {
+  const [products, setProducts] = useState(initial)
   const [search, setSearch] = useState("")
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -39,9 +38,10 @@ export function ProductList({ products }: { products: Product[] }) {
     [products, search]
   )
 
-  const refresh = useCallback(() => {
-    router.refresh()
-  }, [router])
+  async function refresh() {
+    const data = await getProducts()
+    setProducts(data)
+  }
 
   async function handleCreate(values: ProductFormValues) {
     setIsSubmitting(true)
@@ -49,9 +49,10 @@ export function ProductList({ products }: { products: Product[] }) {
       await createProduct(values)
       toast.success("Producto creado correctamente")
       setIsDialogOpen(false)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al crear el producto")
+      console.error(e)
     } finally {
       setIsSubmitting(false)
     }
@@ -65,9 +66,10 @@ export function ProductList({ products }: { products: Product[] }) {
       toast.success("Producto actualizado correctamente")
       setEditingProduct(null)
       setIsDialogOpen(false)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al actualizar el producto")
+      console.error(e)
     } finally {
       setIsSubmitting(false)
     }
@@ -78,18 +80,20 @@ export function ProductList({ products }: { products: Product[] }) {
     try {
       await deleteProduct(id)
       toast.success("Producto eliminado correctamente")
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al eliminar el producto")
+      console.error(e)
     }
   }
 
   async function handleToggleStatus(id: string) {
     try {
       await toggleProductStatus(id)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al cambiar el estado del producto")
+      console.error(e)
     }
   }
 

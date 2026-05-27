@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo } from "react"
 import { Pencil, Trash2, Plus, Users, Search } from "lucide-react"
 import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
@@ -14,11 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { CustomerForm, type CustomerFormValues } from "@/components/forms/customer-form"
-import { createCustomer, updateCustomer, deleteCustomer } from "@/server/customers"
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from "@/server/customers"
 import { toast } from "sonner"
 
-export function CustomerList({ customers }: { customers: Customer[] }) {
-  const router = useRouter()
+export function CustomerList({ customers: initial }: { customers: Customer[] }) {
+  const [customers, setCustomers] = useState(initial)
   const [search, setSearch] = useState("")
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -37,9 +36,10 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
     [customers, search]
   )
 
-  const refresh = useCallback(() => {
-    router.refresh()
-  }, [router])
+  async function refresh() {
+    const data = await getCustomers()
+    setCustomers(data)
+  }
 
   async function handleCreate(values: CustomerFormValues) {
     setIsSubmitting(true)
@@ -47,9 +47,10 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
       await createCustomer(values)
       toast.success("Cliente creado correctamente")
       setIsDialogOpen(false)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al crear el cliente")
+      console.error(e)
     } finally {
       setIsSubmitting(false)
     }
@@ -63,9 +64,10 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
       toast.success("Cliente actualizado correctamente")
       setEditingCustomer(null)
       setIsDialogOpen(false)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al actualizar el cliente")
+      console.error(e)
     } finally {
       setIsSubmitting(false)
     }
@@ -76,9 +78,10 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
     try {
       await deleteCustomer(id)
       toast.success("Cliente eliminado correctamente")
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al eliminar el cliente")
+      console.error(e)
     }
   }
 
@@ -160,9 +163,8 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
                 <th className="px-4 py-3 text-left text-sm font-medium">Teléfono</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Dirección</th>
+                <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
               </tr>
             </thead>
@@ -171,13 +173,10 @@ export function CustomerList({ customers }: { customers: Customer[] }) {
                 <tr key={customer.id} className="border-b last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3 text-sm font-medium">{customer.name}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {customer.email ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {customer.phone ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate">
-                    {customer.address ?? "—"}
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {customer.email ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">

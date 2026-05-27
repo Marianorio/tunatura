@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo } from "react"
 import { Trash2, Plus, ShoppingCart, Search } from "lucide-react"
 import type { Customer, Product, Prisma } from "@prisma/client"
 import { Button } from "@/components/ui/button"
@@ -22,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { OrderForm, type OrderFormValues } from "@/components/forms/order-form"
-import { createOrder, updateOrderStatus, deleteOrder } from "@/server/orders"
+import { getOrders, createOrder, updateOrderStatus, deleteOrder } from "@/server/orders"
 import { toast } from "sonner"
 
 type OrderWithRelations = Prisma.OrderGetPayload<{
@@ -44,7 +43,7 @@ const statusVariants: Record<string, "default" | "secondary" | "outline" | "dest
 }
 
 export function OrderList({
-  orders,
+  orders: initial,
   customers,
   products,
 }: {
@@ -52,7 +51,7 @@ export function OrderList({
   customers: Pick<Customer, "id" | "name">[]
   products: Pick<Product, "id" | "name" | "price">[]
 }) {
-  const router = useRouter()
+  const [orders, setOrders] = useState(initial)
   const [search, setSearch] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,9 +69,10 @@ export function OrderList({
     [orders, search]
   )
 
-  const refresh = useCallback(() => {
-    router.refresh()
-  }, [router])
+  async function refresh() {
+    const data = await getOrders()
+    setOrders(data)
+  }
 
   async function handleCreate(values: OrderFormValues) {
     setIsSubmitting(true)
@@ -80,9 +80,10 @@ export function OrderList({
       await createOrder(values)
       toast.success("Pedido creado correctamente")
       setIsDialogOpen(false)
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al crear el pedido")
+      console.error(e)
     } finally {
       setIsSubmitting(false)
     }
@@ -92,9 +93,10 @@ export function OrderList({
     try {
       await updateOrderStatus(id, status)
       toast.success("Estado actualizado")
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al actualizar el estado")
+      console.error(e)
     }
   }
 
@@ -103,9 +105,10 @@ export function OrderList({
     try {
       await deleteOrder(id)
       toast.success("Pedido eliminado correctamente")
-      refresh()
-    } catch {
+      await refresh()
+    } catch (e) {
       toast.error("Error al eliminar el pedido")
+      console.error(e)
     }
   }
 
