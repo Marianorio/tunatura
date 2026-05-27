@@ -29,7 +29,12 @@ export async function getProduct(id: string) {
     where: { id, userId: session.user.id },
   })
 
-  return product
+  if (!product) return null
+  return {
+    ...product,
+    price: Number(product.price),
+    costPrice: product.costPrice ? Number(product.costPrice) : null,
+  }
 }
 
 export async function createProduct(data: ProductFormData) {
@@ -50,7 +55,11 @@ export async function createProduct(data: ProductFormData) {
   })
 
   revalidatePath("/dashboard/products")
-  return product
+  return {
+    ...product,
+    price: Number(product.price),
+    costPrice: product.costPrice ? Number(product.costPrice) : null,
+  }
 }
 
 export async function updateProduct(id: string, data: ProductFormData) {
@@ -76,7 +85,11 @@ export async function updateProduct(id: string, data: ProductFormData) {
   })
 
   revalidatePath("/dashboard/products")
-  return updated
+  return {
+    ...updated,
+    price: Number(updated.price),
+    costPrice: updated.costPrice ? Number(updated.costPrice) : null,
+  }
 }
 
 export async function deleteProduct(id: string) {
@@ -108,5 +121,9 @@ export async function toggleProductStatus(id: string) {
   })
 
   revalidatePath("/dashboard/products")
-  return updated
+  return {
+    ...updated,
+    price: Number(updated.price),
+    costPrice: updated.costPrice ? Number(updated.costPrice) : null,
+  }
 }

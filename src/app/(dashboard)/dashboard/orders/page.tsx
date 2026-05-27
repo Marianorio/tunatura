@@ -18,7 +18,7 @@ export default async function OrdersPage() {
       where: { userId, isActive: true },
       select: { id: true, name: true, price: true },
       orderBy: { name: "asc" },
-    }),
+    }).then((ps) => ps.map((p) => ({ ...p, price: Number(p.price) }))),
   ])
 
   return <OrderList orders={orders} customers={customers} products={products} />
