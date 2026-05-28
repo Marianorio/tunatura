@@ -241,7 +241,9 @@ export function OrderList({
                     >
                       <SelectTrigger className="h-7 w-fit gap-1 border-0 px-2 text-xs font-medium">
                         <Badge variant={statusVariants[order.status] ?? "secondary"}>
-                          <SelectValue />
+                          <SelectValue>
+                            {statusLabels[order.status] ?? order.status}
+                          </SelectValue>
                         </Badge>
                       </SelectTrigger>
                       <SelectContent>

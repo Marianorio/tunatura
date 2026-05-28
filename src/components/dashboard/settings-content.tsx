@@ -78,7 +78,9 @@ export function SettingsView({ user }: { user?: User }) {
             <Label>Tema</Label>
             <Select value={theme} onValueChange={(v) => setTheme(v!)}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue />
+                <SelectValue>
+                  {theme === "light" ? "Claro" : "Oscuro"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="light">

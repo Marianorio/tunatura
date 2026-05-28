@@ -22,8 +22,13 @@ type SerializedProduct = {
   updatedAt: Date
 }
 
+const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
+
 const productSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
+  name: z
+    .string()
+    .min(1, "El nombre es requerido")
+    .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "El precio debe ser mayor a 0"),
   costPrice: z.coerce.number().min(0).optional(),

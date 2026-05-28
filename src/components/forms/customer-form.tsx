@@ -8,9 +8,18 @@ import { FormField } from "@/components/forms/form-field"
 import { Loader2 } from "lucide-react"
 import type { Customer } from "@prisma/client"
 
+const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
+
 const customerSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  phone: z.string().optional(),
+  name: z
+    .string()
+    .min(1, "El nombre es requerido")
+    .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
+  phone: z
+    .string()
+    .regex(/^\+[\d\s\-\(\)]{7,20}$/, "Formato: +54 9 11 12345678")
+    .optional()
+    .or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   address: z.string().optional(),
   notes: z.string().optional(),
