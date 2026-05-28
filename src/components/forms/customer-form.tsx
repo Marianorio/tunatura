@@ -17,7 +17,7 @@ const customerSchema = z.object({
     .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
   phone: z
     .string()
-    .regex(/^\+[\d\s\-\(\)]{7,20}$/, "Formato: +54 9 11 12345678")
+    .regex(/^\+\d{2} \d{3} \d{1,7}$/, "Formato: +54 911 1234567")
     .optional()
     .or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
