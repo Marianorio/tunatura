@@ -57,6 +57,7 @@ export function ProductForm({
   isSubmitting?: boolean
 }) {
   const form = useForm<ProductFormValues>({
+    mode: "onChange",
     resolver: zodResolver(productSchema) as any,
     defaultValues: product
       ? {

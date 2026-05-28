@@ -17,7 +17,7 @@ const customerSchema = z.object({
     .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
   phone: z
     .string()
-    .regex(/^\+\d{2} \d{3} \d{1,7}$/, "Formato: +54 911 1234567")
+    .regex(/^\+\d{2} \d{3} \d{1,7}$/, "Formato: +54 000 0000000")
     .optional()
     .or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -43,6 +43,7 @@ export function CustomerForm({
   isSubmitting?: boolean
 }) {
   const form = useForm<CustomerFormValues>({
+    mode: "onChange",
     resolver: zodResolver(customerSchema) as any,
     defaultValues: customer
       ? {
@@ -74,7 +75,7 @@ export function CustomerForm({
           <FormField
             name="phone"
             label="Teléfono"
-            placeholder="+54 11 1234-5678"
+            placeholder="+54 000 0000000"
           />
           <FormField
             name="email"
