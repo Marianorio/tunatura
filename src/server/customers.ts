@@ -38,10 +38,10 @@ export async function createCustomer(data: CustomerFormData) {
   const customer = await db.customer.create({
     data: {
       name: data.name,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      address: data.address ?? null,
-      notes: data.notes ?? null,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      notes: data.notes || null,
       userId: session.user.id,
     },
   })
@@ -63,10 +63,10 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
     where: { id },
     data: {
       name: data.name,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      address: data.address ?? null,
-      notes: data.notes ?? null,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      notes: data.notes || null,
     },
   })
 
