@@ -1,17 +1,19 @@
 "use client"
 
-import { useForm, FormProvider } from "react-hook-form"
+import { useForm, useController, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { FormField } from "@/components/forms/form-field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormField } from "@/components/forms/form-field"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Customer } from "@prisma/client"
 
 const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
+
+const phoneRegex = /^(\+\d{2}-)?\d{3}-\d{7}$/
 
 const customerSchema = z.object({
   name: z
@@ -20,7 +22,7 @@ const customerSchema = z.object({
     .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
   phone: z
     .string()
-    .regex(/^(\+\d{2}-)?\d{3}-\d{7}$/, "Formato: +54-362-1234567 o 362-1234567")
+    .regex(phoneRegex, "Formato: +54-000-0000000 o 000-0000000")
     .optional()
     .or(z.literal("")),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -34,6 +36,22 @@ export type CustomerFormValues = {
   email?: string
   address?: string
   notes?: string
+}
+
+function formatPhone(raw: string): string {
+  let cleaned = raw.replace(/[^\d+]/g, "")
+  const plusCount = (cleaned.match(/\+/g) || []).length
+  if (plusCount > 1) cleaned = "+" + cleaned.replace(/\+/g, "")
+  if (cleaned.includes("+") && !cleaned.startsWith("+")) cleaned = "+" + cleaned.replace(/\+/g, "")
+  const digits = cleaned.replace(/-/g, "")
+  if (digits.startsWith("+")) {
+    const rest = digits.slice(1)
+    if (rest.length <= 2) return "+" + rest
+    if (rest.length <= 5) return "+" + rest.slice(0, 2) + "-" + rest.slice(2)
+    return "+" + rest.slice(0, 2) + "-" + rest.slice(2, 5) + "-" + rest.slice(5, 12)
+  }
+  if (digits.length <= 3) return digits
+  return digits.slice(0, 3) + "-" + digits.slice(3, 10)
 }
 
 export function CustomerForm({
@@ -65,23 +83,14 @@ export function CustomerForm({
         },
   })
 
-  const phoneValue = form.watch("phone") ?? ""
-  const phoneError = form.formState.errors.phone
+  const { field: phoneField, fieldState: phoneState } = useController({
+    control: form.control,
+    name: "phone",
+  })
 
-  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let value = e.target.value
-    value = value.replace(/[^\d+-]/g, "")
-    const plusCount = (value.match(/\+/g) || []).length
-    if (plusCount > 1) {
-      value = value.replace(/\+/g, "")
-      value = "+" + value
-    }
-    if (value.includes("+") && value.indexOf("+") !== 0) {
-      value = value.replace(/\+/g, "")
-      value = "+" + value
-    }
-    form.setValue("phone", value, { shouldValidate: true })
-  }
+  const {
+    formState: { errors: phoneErrors },
+  } = form
 
   return (
     <FormProvider {...form}>
@@ -97,26 +106,34 @@ export function CustomerForm({
             <Label htmlFor="phone">Teléfono</Label>
             <Input
               id="phone"
-              type="text"
-              placeholder="+54-362-1234567"
+              placeholder="+54-000-0000000"
               maxLength={16}
-              value={phoneValue}
-              onChange={handlePhoneChange}
-              aria-invalid={!!phoneError}
+              value={phoneField.value ?? ""}
+              onChange={(e) => {
+                const formatted = formatPhone(e.target.value)
+                phoneField.onChange(formatted)
+              }}
+              onBlur={phoneField.onBlur}
+              ref={phoneField.ref}
               className={cn(
-                phoneValue.length > 0 && !phoneError && "border-green-600",
-                phoneError && "border-destructive"
+                phoneField.value &&
+                  phoneField.value.length > 0 &&
+                  phoneRegex.test(phoneField.value) &&
+                  "border-green-500 focus-visible:ring-green-500",
+                phoneField.value &&
+                  phoneField.value.length > 0 &&
+                  !phoneRegex.test(phoneField.value) &&
+                  "border-destructive focus-visible:ring-destructive"
               )}
             />
-            {phoneError && (
-              <p className="text-xs text-destructive">{phoneError.message as string}</p>
+            {phoneErrors.phone && (
+              <p className="text-xs text-destructive">
+                {phoneErrors.phone.message as string}
+              </p>
             )}
-            {phoneValue.length > 0 && !phoneError && (
+            {phoneField.value && phoneRegex.test(phoneField.value) && (
               <p className="text-xs text-green-600">Número válido</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Formatos: +54-362-1234567 o 362-1234567
-            </p>
           </div>
           <FormField
             name="email"
