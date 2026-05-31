@@ -21,7 +21,7 @@ import type { Customer } from "@prisma/client"
 
 const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/
 
-const phoneRegex = /^(\+\d{2,3}-)?\d{3}-\d{7}$/
+const phoneRegex = /^(\+\d{2,3}-)?\d{3}-?\d+$/
 
 const countries = [
   { code: "ARG", prefix: "+54", name: "Argentina" },
@@ -50,7 +50,7 @@ function formatPhoneWithPrefix(raw: string, prefix: string): string {
   const localPart = cleaned.slice(prefix.length)
   if (!localPart) return ""
   if (localPart.length <= 3) return prefix + "-" + localPart
-  return prefix + "-" + localPart.slice(0, 3) + "-" + localPart.slice(3, 10)
+  return prefix + "-" + localPart.slice(0, 3) + "-" + localPart.slice(3)
 }
 
 const customerSchema = z.object({
@@ -178,7 +178,7 @@ export function CustomerForm({
               <Input
                 id="phone"
                 placeholder="000-0000000"
-                maxLength={16}
+                maxLength={24}
                 value={phoneField.value ?? ""}
                 onChange={(e) => handlePhoneChange(e.target.value)}
                 onBlur={phoneField.onBlur}
