@@ -56,7 +56,7 @@ export function DashboardView({
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Inicio</h1>
           <p className="text-sm text-muted-foreground">
             Bienvenido de nuevo, {userName}!
           </p>

@@ -139,7 +139,7 @@ export function SalesDashboard({
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
           <h3 className="mb-4 text-sm font-medium">Ventas mensuales</h3>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -164,7 +164,7 @@ export function SalesDashboard({
 
         <div className="rounded-lg border p-4">
           <h3 className="mb-4 text-sm font-medium">Productos más vendidos</h3>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             {topProducts.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -174,7 +174,7 @@ export function SalesDashboard({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    outerRadius={70}
                     label={({ name, percent }) =>
                       `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
                     }
@@ -202,7 +202,7 @@ export function SalesDashboard({
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border p-4">
           <h3 className="mb-4 text-sm font-medium">Tendencia de pedidos</h3>
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

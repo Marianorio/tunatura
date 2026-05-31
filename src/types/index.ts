@@ -31,9 +31,11 @@ export type SidebarState = "expanded" | "collapsed"
 
 export type ProductFormData = {
   name: string
+  brand?: string
   description?: string
   price: number
   costPrice?: number
+  expirationDate?: string
   category?: string
   stock: number
   image?: string

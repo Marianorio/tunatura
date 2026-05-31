@@ -208,7 +208,7 @@ export function OrderList({
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Pedido</th>
@@ -222,19 +222,24 @@ export function OrderList({
             <tbody>
               {filtered.map((order) => (
                 <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 md:px-4">
                     <span className="text-sm font-mono font-medium">
                       {order.orderNumber}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm">{order.customer.name}</td>
+                  <td className="px-3 py-3 text-sm md:px-4">
+                    {order.customer.name}
+                    <div className="text-xs text-muted-foreground md:hidden">
+                      {order.items.map((i) => i.product.name).join(", ")}
+                    </div>
+                  </td>
                   <td className="hidden px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate md:table-cell">
                     {order.items.map((i) => i.product.name).join(", ")}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium">
+                  <td className="px-3 py-3 text-right text-sm font-medium md:px-4">
                     ${Number(order.total).toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-3 text-center md:px-4">
                     <Select
                       value={order.status ?? "pending"}
                       onValueChange={(v) => handleStatusChange(order.id, v ?? "pending")}
@@ -255,11 +260,10 @@ export function OrderList({
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-3 text-right md:px-4">
                     <Button
                       variant="ghost"
-                      size="icon-sm"
-                      className="text-destructive hover:text-destructive"
+                      className="size-9 md:size-8 text-destructive hover:text-destructive"
                       onClick={() => handleDelete(order.id)}
                     >
                       <Trash2 className="size-4" />

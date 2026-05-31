@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     default: "Tu Natura",
   },
   description: "Plataforma profesional para consultores Natura independientes",
+  icons: {
+    icon: "/tunaturaicon.png",
+  },
 }
 
 export default function RootLayout({

@@ -1,5 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import {
   Sheet,
   SheetContent,
@@ -13,15 +15,22 @@ export function MobileSidebar({
 }: {
   items: NavItem[]
 }) {
+  const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         className="md:hidden inline-flex size-8 items-center justify-center rounded-lg hover:bg-muted transition-colors"
         aria-label="Open menu"
       >
         <Menu className="size-5" />
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
+      <SheetContent side="left" className="w-full p-0 border-r-0 sm:max-w-sm sm:border-r">
         <Sidebar items={items} />
       </SheetContent>
     </Sheet>

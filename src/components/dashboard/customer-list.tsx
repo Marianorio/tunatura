@@ -159,47 +159,49 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[500px]">
+          <table className="w-full min-w-[400px]">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Teléfono</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Email</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Dirección</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Teléfono</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Email</th>
+                <th className="hidden px-4 py-3 text-left text-sm font-medium lg:table-cell">Dirección</th>
                 <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((customer) => (
                 <tr key={customer.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3 text-sm font-medium">
+                  <td className="px-3 py-3 text-sm font-medium md:px-4">
                     {customer.name}
                     <div className="text-xs text-muted-foreground sm:hidden">
-                      {customer.phone || "No especificado"} {customer.email ? `· ${customer.email}` : ""}
+                      {customer.phone || "No especificado"}{customer.email ? ` · ${customer.email}` : ""}
+                    </div>
+                    <div className="text-xs text-muted-foreground md:hidden lg:hidden">
+                      {customer.address || ""}
                     </div>
                   </td>
                   <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
                     {customer.phone || "No especificado"}
                   </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
                     {customer.email || "No especificado"}
                   </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
+                  <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
                     {customer.address || "No especificado"}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-3 text-right md:px-4">
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
-                        size="icon-sm"
+                        className="size-9 md:size-8"
                         onClick={() => openEdit(customer)}
                       >
                         <Pencil className="size-4" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon-sm"
-                        className="text-destructive hover:text-destructive"
+                        className="size-9 md:size-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(customer.id)}
                       >
                         <Trash2 className="size-4" />

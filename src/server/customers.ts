@@ -74,6 +74,39 @@ export async function updateCustomer(id: string, data: CustomerFormData) {
   return updated
 }
 
+export async function getCustomerDebts() {
+  const session = await auth()
+  if (!session?.user?.id) throw new Error("No autorizado")
+
+  const customers = await db.customer.findMany({
+    where: { userId: session.user.id },
+    include: {
+      orders: {
+        select: { id: true, orderNumber: true, total: true, createdAt: true, status: true },
+      },
+    },
+    orderBy: { name: "asc" },
+  })
+
+  return customers
+    .map((c) => {
+      const unpaid = c.orders.filter((o) => o.status === "pending")
+      return {
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        totalDebt: Number(unpaid.reduce((sum, o) => sum + Number(o.total), 0)),
+        unpaidOrders: unpaid.map((o) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          total: Number(o.total),
+          createdAt: o.createdAt,
+        })),
+      }
+    })
+    .filter((c) => c.totalDebt > 0)
+}
+
 export async function deleteCustomer(id: string) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("No autorizado")

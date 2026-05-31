@@ -37,6 +37,15 @@ export async function getProduct(id: string) {
   }
 }
 
+function generateSku(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  let result = "NAT-"
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
 export async function createProduct(data: ProductFormData) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("No autorizado")
@@ -44,12 +53,15 @@ export async function createProduct(data: ProductFormData) {
   const product = await db.product.create({
     data: {
       name: data.name,
+      brand: data.brand ?? null,
       description: data.description ?? null,
       price: data.price,
       costPrice: data.costPrice ? data.costPrice : null,
+      expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
       category: data.category ?? null,
       stock: data.stock,
       image: data.image ?? null,
+      sku: generateSku(),
       userId: session.user.id,
     },
   })
@@ -75,9 +87,11 @@ export async function updateProduct(id: string, data: ProductFormData) {
     where: { id },
     data: {
       name: data.name,
+      brand: data.brand ?? null,
       description: data.description ?? null,
       price: data.price,
       costPrice: data.costPrice ? data.costPrice : null,
+      expirationDate: data.expirationDate ? new Date(data.expirationDate) : null,
       category: data.category ?? null,
       stock: data.stock,
       image: data.image ?? null,

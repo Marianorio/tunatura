@@ -8,6 +8,7 @@ import {
   Package,
   Users,
   ShoppingCart,
+  DollarSign,
   TrendingUp,
   Settings,
   type LucideIcon,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import Image from "next/image"
 import { APP_NAME } from "@/lib/constants"
 
 const iconMap: Record<string, LucideIcon> = {
@@ -23,6 +25,7 @@ const iconMap: Record<string, LucideIcon> = {
   Package,
   Users,
   ShoppingCart,
+  DollarSign,
   TrendingUp,
   Settings,
 }
@@ -62,9 +65,18 @@ export function Sidebar({
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex h-14 items-center gap-2 border-b px-4">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-          TN
+      <div className={cn(
+        "flex h-14 items-center border-b",
+        collapsed ? "justify-center px-0" : "gap-2 px-4"
+      )}>
+        <div className="flex size-8 shrink-0 items-center justify-center">
+          <Image
+            src="/tunaturalogo2.png"
+            alt={APP_NAME}
+            width={32}
+            height={32}
+            className="size-8 object-contain"
+          />
         </div>
         {!collapsed && (
           <span className="text-sm font-semibold tracking-tight">
@@ -74,46 +86,41 @@ export function Sidebar({
       </div>
 
       <ScrollArea className="flex-1 py-2">
-        <nav className="flex flex-col gap-1 px-2">
-          {navItems.map(({ label, href, Icon, active }) => {
-            const linkContent = (
+        <nav className={cn("flex flex-col", collapsed ? "items-center gap-1 px-2" : "gap-1 px-2")}>
+          {navItems.map(({ label, href, Icon, active }) => (
+            <div key={href} className="w-full">
               <Link
                 href={href}
+                title={collapsed ? label : undefined}
                 className={cn(
-                  "inline-flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-normal transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  collapsed && "justify-center px-0",
-                  active &&
-                    "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  "flex items-center rounded-lg text-sm font-normal transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                  collapsed
+                    ? "size-10 justify-center"
+                    : "gap-3 px-3 py-2",
+                  active && "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                 )}
               >
-                <Icon className="size-4 shrink-0" />
+                <Icon className={cn("shrink-0", collapsed ? "size-5" : "size-4")} />
                 {!collapsed && <span>{label}</span>}
               </Link>
-            )
-
-            if (collapsed) {
-              return <div key={href} title={label}>{linkContent}</div>
-            }
-
-            return <div key={href}>{linkContent}</div>
-          })}
-
+            </div>
+          ))}
         </nav>
       </ScrollArea>
 
       <Separator />
-      <div className="p-2">
+      <div className={cn("p-2", collapsed && "flex justify-center")}>
         {collapsed ? (
           <Button
             variant="ghost"
             size="icon"
-            className="size-12 w-full"
+            className="size-10"
             onClick={onToggle}
             aria-label="Expand sidebar"
             title="Expandir"
           >
             <svg
-              className="size-4"
+              className="size-5"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

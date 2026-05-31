@@ -9,13 +9,16 @@ import { Loader2 } from "lucide-react"
 
 type SerializedProduct = {
   id: string
+  sku: string | null
   name: string
+  brand: string | null
   price: number
   costPrice: number | null
   stock: number
   isActive: boolean
   category: string | null
   description: string | null
+  expirationDate: Date | null
   image: string | null
   userId: string
   createdAt: Date
@@ -29,9 +32,11 @@ const productSchema = z.object({
     .string()
     .min(1, "El nombre es requerido")
     .regex(nameRegex, "El nombre solo puede contener letras y espacios"),
+  brand: z.string().optional(),
   description: z.string().optional(),
   price: z.coerce.number().min(0.01, "El precio debe ser mayor a 0"),
   costPrice: z.coerce.number().min(0).optional(),
+  expirationDate: z.string().optional(),
   category: z.string().optional(),
   stock: z.coerce.number().int().min(0, "El stock no puede ser negativo"),
   image: z.string().optional(),
@@ -39,9 +44,11 @@ const productSchema = z.object({
 
 export type ProductFormValues = {
   name: string
+  brand?: string
   description?: string
   price: number
   costPrice?: number
+  expirationDate?: string
   category?: string
   stock: number
   image?: string
@@ -62,20 +69,26 @@ export function ProductForm({
     defaultValues: product
       ? {
           name: product.name,
+          brand: product.brand ?? "",
           description: product.description ?? "",
           price: Number(product.price),
-          costPrice: product.costPrice ? Number(product.costPrice) : 0,
+          costPrice: product.costPrice ? Number(product.costPrice) : undefined,
+          expirationDate: product.expirationDate
+            ? new Date(product.expirationDate).toISOString().split("T")[0]
+            : "",
           category: product.category ?? "",
           stock: product.stock,
           image: product.image ?? "",
         }
       : {
           name: "",
+          brand: "",
           description: "",
-          price: 0,
-          costPrice: 0,
+          price: undefined as unknown as number,
+          costPrice: undefined as unknown as number,
+          expirationDate: "",
           category: "",
-          stock: 0,
+          stock: undefined as unknown as number,
           image: "",
         },
   })
@@ -88,6 +101,11 @@ export function ProductForm({
           label="Nombre"
           placeholder="Nombre del producto"
           required
+        />
+        <FormField
+          name="brand"
+          label="Marca"
+          placeholder="Ej: Natura, Avon..."
         />
         <FormField
           name="description"
@@ -113,18 +131,23 @@ export function ProductForm({
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
+            name="expirationDate"
+            label="Fecha de vencimiento"
+            type="date"
+          />
+          <FormField
             name="category"
             label="Categoría"
             placeholder="Ej: Perfumes, Maquillaje..."
           />
-          <FormField
-            name="stock"
-            label="Stock"
-            type="number"
-            placeholder="0"
-            required
-          />
         </div>
+        <FormField
+          name="stock"
+          label="Stock"
+          type="number"
+          placeholder="0"
+          required
+        />
         <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
           {isSubmitting ? "Guardando..." : product ? "Actualizar producto" : "Crear producto"}
