@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Trash2, Plus, ShoppingCart, Search } from "lucide-react"
+import { Trash2, Plus, ShoppingCart, Search, Clock, CheckCircle2, Package, XCircle, User, Hash, DollarSign } from "lucide-react"
 import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,7 @@ import {
 import { OrderForm, type OrderFormValues } from "@/components/forms/order-form"
 import { getOrders, createOrder, updateOrderStatus, deleteOrder } from "@/server/orders"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 type SerializedProduct = {
   id: string
@@ -34,6 +35,7 @@ type SerializedProduct = {
   category: string | null
   description: string | null
   image: string | null
+  barcode: string | null
   userId: string
   createdAt: Date
   updatedAt: Date
@@ -63,18 +65,11 @@ type SerializedOrder = {
   items: SerializedOrderItem[]
 }
 
-const statusLabels: Record<string, string> = {
-  pending: "Pendiente",
-  confirmed: "Confirmado",
-  delivered: "Entregado",
-  cancelled: "Cancelado",
-}
-
-const statusVariants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  pending: "secondary",
-  confirmed: "default",
-  delivered: "outline",
-  cancelled: "destructive",
+const statusConfig: Record<string, { label: string; icon: React.ElementType; variant: "default" | "secondary" | "outline" | "destructive"; color: string; bg: string }> = {
+  pending: { label: "Pendiente", icon: Clock, variant: "secondary", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20" },
+  confirmed: { label: "Confirmado", icon: CheckCircle2, variant: "default", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
+  delivered: { label: "Entregado", icon: Package, variant: "outline", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
+  cancelled: { label: "Cancelado", icon: XCircle, variant: "destructive", color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20" },
 }
 
 export function OrderList({
@@ -84,12 +79,17 @@ export function OrderList({
 }: {
   orders: SerializedOrder[]
   customers: Pick<Customer, "id" | "name">[]
-  products: { id: string; name: string; price: number }[]
+  products: { id: string; name: string; price: number; barcode: string | null }[]
 }) {
   const [orders, setOrders] = useState(initial)
   const [search, setSearch] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const pendingCount = orders.filter((o) => o.status === "pending").length
+  const confirmedCount = orders.filter((o) => o.status === "confirmed").length
+  const deliveredCount = orders.filter((o) => o.status === "delivered").length
+  const cancelledCount = orders.filter((o) => o.status === "cancelled").length
 
   const filtered = useMemo(
     () =>
@@ -150,10 +150,10 @@ export function OrderList({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">Pedidos</h1>
           <p className="text-sm text-muted-foreground">
-            Seguimiento de todos los pedidos realizados ({filtered.length} de {orders.length})
+            Seguimiento de todos los pedidos realizados
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -178,10 +178,29 @@ export function OrderList({
         </Dialog>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-4">
+        {[
+          { label: "Pendientes", count: pendingCount, icon: Clock, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20" },
+          { label: "Confirmados", count: confirmedCount, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
+          { label: "Entregados", count: deliveredCount, icon: Package, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/20" },
+          { label: "Cancelados", count: cancelledCount, icon: XCircle, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20" },
+        ].map((s) => (
+          <div key={s.label} className={cn("flex items-center gap-3 rounded-lg border bg-card px-4 py-3", s.bg)}>
+            <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", s.bg)}>
+              <s.icon className={cn("size-4", s.color)} />
+            </div>
+            <div>
+              <p className="text-lg font-semibold">{s.count}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar pedidos (número, cliente, producto)..."
+          placeholder="Buscar por número, cliente o producto..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -189,7 +208,7 @@ export function OrderList({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-16">
           <ShoppingCart className="mb-4 size-12 text-muted-foreground/50" />
           <h3 className="text-lg font-medium">
             {search ? "Sin resultados" : "No hay pedidos"}
@@ -207,70 +226,86 @@ export function OrderList({
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[500px]">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">Pedido</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">Cliente</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Productos</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Total</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">Estado</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pedido</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cliente</th>
+                <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Productos</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((order) => (
-                <tr key={order.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-3 py-3 md:px-4">
-                    <span className="text-sm font-mono font-medium">
-                      {order.orderNumber}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-sm md:px-4">
-                    {order.customer.name}
-                    <div className="text-xs text-muted-foreground md:hidden">
+              {filtered.map((order) => {
+                const status = statusConfig[order.status] ?? statusConfig.pending
+                const StatusIcon = status.icon
+                return (
+                  <tr key={order.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <Hash className="size-3.5 text-muted-foreground" />
+                        <span className="text-sm font-mono font-medium">
+                          {order.orderNumber}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <User className="size-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm">{order.customer.name}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground md:hidden">
+                        {order.items.map((i) => i.product.name).join(", ")}
+                      </div>
+                    </td>
+                    <td className="hidden max-w-[220px] truncate px-4 py-3.5 text-sm text-muted-foreground md:table-cell">
                       {order.items.map((i) => i.product.name).join(", ")}
-                    </div>
-                  </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate md:table-cell">
-                    {order.items.map((i) => i.product.name).join(", ")}
-                  </td>
-                  <td className="px-3 py-3 text-right text-sm font-medium md:px-4">
-                    ${Number(order.total).toFixed(2)}
-                  </td>
-                  <td className="px-3 py-3 text-center md:px-4">
-                    <Select
-                      value={order.status ?? "pending"}
-                      onValueChange={(v) => handleStatusChange(order.id, v ?? "pending")}
-                    >
-                      <SelectTrigger className="h-7 w-fit gap-1 border-0 px-2 text-xs font-medium">
-                        <Badge variant={statusVariants[order.status] ?? "secondary"}>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold">
+                        <DollarSign className="size-3.5 text-muted-foreground" />
+                        {Number(order.total).toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <Select
+                        value={order.status ?? "pending"}
+                        onValueChange={(v) => handleStatusChange(order.id, v ?? "pending")}
+                      >
+                        <SelectTrigger className={cn("h-7 w-fit gap-1.5 border-0 px-2.5 text-xs font-medium", status.bg)}>
+                          <StatusIcon className={cn("size-3", status.color)} />
                           <SelectValue>
-                            {statusLabels[order.status] ?? order.status}
+                            {status.label}
                           </SelectValue>
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(statusLabels).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="px-3 py-3 text-right md:px-4">
-                    <Button
-                      variant="ghost"
-                      className="size-9 md:size-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(order.id)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(statusConfig).map(([key, config]) => (
+                            <SelectItem key={key} value={key}>
+                              <span className="flex items-center gap-2">
+                                <config.icon className="size-3.5" />
+                                {config.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        onClick={() => handleDelete(order.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                )}
+              )}
             </tbody>
           </table>
         </div>

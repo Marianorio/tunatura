@@ -1,11 +1,14 @@
 "use client"
 
+import { useState, useRef } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { FormField } from "@/components/forms/form-field"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload, X } from "lucide-react"
+import Image from "next/image"
+import { cn } from "@/lib/utils"
 
 type SerializedProduct = {
   id: string
@@ -20,6 +23,7 @@ type SerializedProduct = {
   description: string | null
   expirationDate: Date | null
   image: string | null
+  barcode: string | null
   userId: string
   createdAt: Date
   updatedAt: Date
@@ -40,6 +44,7 @@ const productSchema = z.object({
   category: z.string().optional(),
   stock: z.coerce.number().int().min(0, "El stock no puede ser negativo"),
   image: z.string().optional(),
+  barcode: z.string().optional(),
 })
 
 export type ProductFormValues = {
@@ -52,6 +57,7 @@ export type ProductFormValues = {
   category?: string
   stock: number
   image?: string
+  barcode?: string
 }
 
 export function ProductForm({
@@ -63,6 +69,10 @@ export function ProductForm({
   onSubmit: (values: ProductFormValues) => Promise<void>
   isSubmitting?: boolean
 }) {
+  const [imageUrl, setImageUrl] = useState(product?.image ?? "")
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const form = useForm<ProductFormValues>({
     mode: "onChange",
     resolver: zodResolver(productSchema) as any,
@@ -79,6 +89,7 @@ export function ProductForm({
           category: product.category ?? "",
           stock: product.stock,
           image: product.image ?? "",
+          barcode: product.barcode ?? "",
         }
       : {
           name: "",
@@ -90,12 +101,94 @@ export function ProductForm({
           category: "",
           stock: undefined as unknown as number,
           image: "",
+          barcode: "",
         },
   })
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const body = new FormData()
+      body.append("file", file)
+
+      const res = await fetch("/api/upload", { method: "POST", body })
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error)
+
+      setImageUrl(data.url)
+      form.setValue("image", data.url)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
 
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Imagen del producto</label>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              "relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 transition-colors",
+              "hover:border-accent hover:bg-accent/5",
+              imageUrl ? "border-muted-foreground/20" : "border-muted-foreground/30"
+            )}
+          >
+            {imageUrl ? (
+              <div className="relative w-full">
+                <div className="relative mx-auto size-32 overflow-hidden rounded-lg">
+                  <Image
+                    src={imageUrl}
+                    alt="Vista previa"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setImageUrl("")
+                    form.setValue("image", "")
+                  }}
+                  className="absolute -top-2 right-2 flex size-6 items-center justify-center rounded-full bg-destructive text-white shadow-sm hover:bg-destructive/90"
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Upload className="size-8" />
+                <p className="text-sm font-medium">
+                  {uploading ? "Subiendo..." : "Haz clic para subir imagen"}
+                </p>
+                <p className="text-xs">WebP · Máx 600x600px</p>
+              </div>
+            )}
+            {uploading && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/60">
+                <Loader2 className="size-6 animate-spin text-accent" />
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+        </div>
+
         <FormField
           name="name"
           label="Nombre"
@@ -148,8 +241,13 @@ export function ProductForm({
           placeholder="0"
           required
         />
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+        <FormField
+          name="barcode"
+          label="Código de barras"
+          placeholder="Ej: 1234567890123"
+        />
+        <Button type="submit" disabled={isSubmitting || uploading} className="w-full">
+          {(isSubmitting || uploading) && <Loader2 className="mr-2 size-4 animate-spin" />}
           {isSubmitting ? "Guardando..." : product ? "Actualizar producto" : "Crear producto"}
         </Button>
       </form>

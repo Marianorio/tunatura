@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Pencil, Trash2, Plus, Users, Search } from "lucide-react"
+import { Pencil, Trash2, Plus, Users, Search, Phone, Mail, MapPin, UserCheck } from "lucide-react"
 import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,9 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const withPhone = customers.filter((c) => c.phone).length
+  const withEmail = customers.filter((c) => c.email).length
 
   const filtered = useMemo(
     () =>
@@ -98,10 +101,10 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">Clientes</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona tu base de clientes ({filtered.length} de {customers.length})
+            Gestiona tu base de clientes
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -129,10 +132,34 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
         </Dialog>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Users className="size-4 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Total</p>
+          </div>
+          <p className="mt-1 text-xl font-bold">{customers.length}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Phone className="size-4 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Con teléfono</p>
+          </div>
+          <p className="mt-1 text-xl font-bold">{withPhone}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Mail className="size-4 text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Con email</p>
+          </div>
+          <p className="mt-1 text-xl font-bold">{withEmail}</p>
+        </div>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar clientes..."
+          placeholder="Buscar por nombre, teléfono o email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -140,7 +167,7 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-16">
           <Users className="mb-4 size-12 text-muted-foreground/50" />
           <h3 className="text-lg font-medium">
             {search ? "Sin resultados" : "No hay clientes"}
@@ -158,61 +185,134 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[400px]">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">Nombre</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">Teléfono</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Email</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium lg:table-cell">Dirección</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((customer) => (
-                <tr key={customer.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-3 py-3 text-sm font-medium md:px-4">
-                    {customer.name}
-                    <div className="text-xs text-muted-foreground sm:hidden">
-                      {customer.phone || "No especificado"}{customer.email ? ` · ${customer.email}` : ""}
-                    </div>
-                    <div className="text-xs text-muted-foreground md:hidden lg:hidden">
-                      {customer.address || ""}
-                    </div>
-                  </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground sm:table-cell">
-                    {customer.phone || "No especificado"}
-                  </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
-                    {customer.email || "No especificado"}
-                  </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                    {customer.address || "No especificado"}
-                  </td>
-                  <td className="px-3 py-3 text-right md:px-4">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        className="size-9 md:size-8"
-                        onClick={() => openEdit(customer)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="size-9 md:size-8 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(customer.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          <div className="grid gap-3 sm:hidden">
+            {filtered.map((customer) => (
+              <div key={customer.id} className="rounded-xl border bg-card p-4 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{customer.name}</p>
+                    {customer.phone && (
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="size-3" />
+                        {customer.phone}
+                      </p>
+                    )}
+                    {customer.email && (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Mail className="size-3" />
+                        {customer.email}
+                      </p>
+                    )}
+                    {customer.address && (
+                      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <MapPin className="size-3" />
+                        {customer.address}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      onClick={() => openEdit(customer)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      onClick={() => handleDelete(customer.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto rounded-xl border bg-card shadow-sm sm:block">
+            <table className="w-full min-w-[500px]">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nombre</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Teléfono</th>
+                  <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Email</th>
+                  <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">Dirección</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((customer) => (
+                  <tr key={customer.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <UserCheck className="size-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{customer.name}</p>
+                          <p className="text-xs text-muted-foreground sm:hidden">
+                            {customer.phone || "Sin teléfono"}{customer.email ? ` · ${customer.email}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 text-sm">
+                      {customer.phone ? (
+                        <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                          <Phone className="size-3" />
+                          {customer.phone}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3.5 text-sm text-muted-foreground md:table-cell">
+                      {customer.email ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <Mail className="size-3" />
+                          {customer.email}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
+                      {customer.address ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <MapPin className="size-3" />
+                          {customer.address}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          onClick={() => openEdit(customer)}
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          onClick={() => handleDelete(customer.id)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )

@@ -10,9 +10,18 @@ import { Loader2 } from "lucide-react"
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
   async function handleGoogleSignIn() {
     setIsLoading(true)
-    await signIn("google", { callbackUrl: "/dashboard" })
+    setErrorMsg(null)
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" })
+    } catch (e) {
+      setErrorMsg("Error al iniciar sesión. Revisá la consola (F12).")
+      console.error("signIn error:", e)
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -79,6 +88,11 @@ export function LoginForm() {
           </div>
 
           <div className="rounded-xl border bg-card p-8 shadow-sm">
+            {errorMsg && (
+              <div className="mb-4 rounded-lg bg-destructive/10 px-4 py-2 text-xs text-destructive">
+                {errorMsg}
+              </div>
+            )}
             <Button
               variant="outline"
               className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border bg-card text-sm font-medium text-foreground transition-all hover:bg-muted hover:shadow-sm"

@@ -39,6 +39,7 @@ export type ProductFormData = {
   category?: string
   stock: number
   image?: string
+  barcode?: string
 }
 
 export type ProductWithRelations = Product

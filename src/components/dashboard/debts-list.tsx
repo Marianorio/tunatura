@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Search, DollarSign } from "lucide-react"
+import { Search, DollarSign, Phone, CalendarDays, ChevronRight, AlertTriangle, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getCustomerDebts } from "@/server/customers"
 import { updateOrderStatus } from "@/server/orders"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 type UnpaidOrder = {
   id: string
@@ -24,18 +25,40 @@ type CustomerDebt = {
   unpaidOrders: UnpaidOrder[]
 }
 
+function daysSince(date: Date): number {
+  return Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24))
+}
+
+const urgencyConfig = [
+  { threshold: 30, label: "Crítico", color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20", badge: "destructive" as const },
+  { threshold: 15, label: "Precaución", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20", badge: "secondary" as const },
+  { threshold: 0, label: "Reciente", color: "text-muted-foreground", bg: "bg-muted/30", badge: "outline" as const },
+]
+
+function getUrgency(days: number) {
+  return urgencyConfig.find((u) => days >= u.threshold) ?? urgencyConfig[urgencyConfig.length - 1]
+}
+
 export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
   const [debts, setDebts] = useState(initial)
   const [search, setSearch] = useState("")
 
+  const sortedByDebt = useMemo(
+    () => [...debts].sort((a, b) => b.totalDebt - a.totalDebt),
+    [debts]
+  )
+
   const filtered = useMemo(
     () =>
-      debts.filter((d) => {
+      sortedByDebt.filter((d) => {
         const q = search.toLowerCase()
         return d.name.toLowerCase().includes(q) || (d.phone ?? "").toLowerCase().includes(q)
       }),
-    [debts, search]
+    [sortedByDebt, search]
   )
+
+  const totalOutstanding = debts.reduce((s, d) => s + d.totalDebt, 0)
+  const criticalCount = debts.filter((d) => daysSince(d.unpaidOrders[0]?.createdAt ?? new Date()) >= 30).length
 
   async function refresh() {
     const data = await getCustomerDebts()
@@ -56,11 +79,26 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">Deudas</h1>
           <p className="text-sm text-muted-foreground">
-            Clientes con pedidos pendientes de pago ({filtered.length} de {debts.length})
+            Clientes con pedidos pendientes de pago
           </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Total adeudado</p>
+          <p className="text-xl font-bold text-red-600">${totalOutstanding.toFixed(2)}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Deudores</p>
+          <p className="text-xl font-bold">{debts.length}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Casos críticos (+30 días)</p>
+          <p className="text-xl font-bold text-amber-600">{criticalCount}</p>
         </div>
       </div>
 
@@ -75,7 +113,7 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-16">
           <DollarSign className="mb-4 size-12 text-muted-foreground/50" />
           <h3 className="text-lg font-medium">
             {search ? "Sin resultados" : "No hay deudas pendientes"}
@@ -88,43 +126,73 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((customer) => (
-            <div key={customer.id} className="rounded-lg border">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b bg-muted/30 px-4 py-3">
-                <div className="min-w-0 flex-1">
-                  <span className="font-medium">{customer.name}</span>
-                  {customer.phone && (
-                    <span className="ml-2 text-sm text-muted-foreground">{customer.phone}</span>
-                  )}
-                </div>
-                <Badge variant="destructive" className="text-sm shrink-0">
-                  ${customer.totalDebt.toFixed(2)}
-                </Badge>
-              </div>
-              <div className="divide-y">
-                {customer.unpaidOrders.map((order) => (
-                  <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                      <span className="text-sm font-mono">{order.orderNumber}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {new Date(order.createdAt).toLocaleDateString("es-AR")}
-                      </span>
+          {filtered.map((customer) => {
+            const oldestDays = daysSince(customer.unpaidOrders[customer.unpaidOrders.length - 1]?.createdAt ?? new Date())
+            const urgency = getUrgency(oldestDays)
+            return (
+              <div key={customer.id} className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", urgency.bg)}>
+                      <DollarSign className={cn("size-5", urgency.color)} />
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-sm font-medium">${order.total.toFixed(2)}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleMarkPaid(order.id)}
-                      >
-                        Pagado
-                      </Button>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{customer.name}</p>
+                      {customer.phone && (
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Phone className="size-3" />
+                          {customer.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
-                ))}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-red-600">${customer.totalDebt.toFixed(2)}</p>
+                      <p className={cn("flex items-center gap-1 text-xs", urgency.color)}>
+                        <Clock className="size-3" />
+                        {oldestDays}d sin pagar
+                      </p>
+                    </div>
+                    <Badge variant={urgency.badge}>{urgency.label}</Badge>
+                  </div>
+                </div>
+                <div className="divide-y">
+                  {customer.unpaidOrders.map((order) => {
+                    const days = daysSince(order.createdAt)
+                    const urgency = getUrgency(days)
+                    return (
+                      <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 transition-colors hover:bg-muted/20">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
+                          <span className="text-sm font-mono font-medium">{order.orderNumber}</span>
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                            <CalendarDays className="size-3" />
+                            {new Date(order.createdAt).toLocaleDateString("es-AR")}
+                          </span>
+                          <span className={cn("text-xs font-medium shrink-0", urgency.color)}>
+                            ({days}d)
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-3">
+                          <span className="text-sm font-semibold">${order.total.toFixed(2)}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            onClick={() => handleMarkPaid(order.id)}
+                          >
+                            <DollarSign className="mr-1 size-3" />
+                            Pagado
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

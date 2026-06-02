@@ -61,6 +61,7 @@ export async function createProduct(data: ProductFormData) {
       category: data.category ?? null,
       stock: data.stock,
       image: data.image ?? null,
+      barcode: data.barcode ? data.barcode : null,
       sku: generateSku(),
       userId: session.user.id,
     },
@@ -95,6 +96,7 @@ export async function updateProduct(id: string, data: ProductFormData) {
       category: data.category ?? null,
       stock: data.stock,
       image: data.image ?? null,
+      barcode: data.barcode ? data.barcode : null,
     },
   })
 

@@ -4,6 +4,7 @@ import { useForm, useFieldArray, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
+import { BarcodeScanner } from "@/components/ui/barcode-scanner"
 import { Loader2, Plus, X } from "lucide-react"
 import {
   Select,
@@ -51,7 +52,7 @@ export function OrderForm({
   isSubmitting,
 }: {
   customers: Pick<Customer, "id" | "name">[]
-  products: { id: string; name: string; price: number }[]
+  products: { id: string; name: string; price: number; barcode: string | null }[]
   onSubmit: (values: OrderFormValues) => Promise<void>
   isSubmitting?: boolean
 }) {
@@ -87,6 +88,18 @@ export function OrderForm({
     }
   }
 
+  function handleBarcodeScan(product: { id: string; name: string; price: number }) {
+    const existingIndex = fields.findIndex(
+      (f, i) => form.watch(`items.${i}.productId`) === product.id
+    )
+    if (existingIndex >= 0) {
+      const qty = form.watch(`items.${existingIndex}.quantity`) || 0
+      form.setValue(`items.${existingIndex}.quantity`, qty + 1)
+    } else {
+      append({ productId: product.id, productName: product.name, quantity: 1, unitPrice: Number(product.price) })
+    }
+  }
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -113,6 +126,8 @@ export function OrderForm({
             <p className="text-xs text-destructive">{errors.customerId.message as string}</p>
           )}
         </div>
+
+        <BarcodeScanner products={products} onScan={handleBarcodeScan} />
 
         <div className="space-y-3">
           <Label>Productos</Label>

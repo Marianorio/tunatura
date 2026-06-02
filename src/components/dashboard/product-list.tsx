@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Pencil, Trash2, Plus, Package, Search } from "lucide-react"
+import { Pencil, Trash2, Plus, Package, Search, Tag, AlertTriangle, CheckCircle2, ImageIcon } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -30,6 +31,7 @@ type SerializedProduct = {
   description: string | null
   expirationDate: Date | null
   image: string | null
+  barcode: string | null
   userId: string
   createdAt: Date
   updatedAt: Date
@@ -42,6 +44,10 @@ export function ProductList({ products: initial }: { products: SerializedProduct
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const activeCount = products.filter((p) => p.isActive).length
+  const lowStockCount = products.filter((p) => p.isActive && p.stock > 0 && p.stock <= 5).length
+  const outOfStockCount = products.filter((p) => p.isActive && p.stock === 0).length
+
   const filtered = useMemo(
     () =>
       products.filter((p) => {
@@ -49,6 +55,7 @@ export function ProductList({ products: initial }: { products: SerializedProduct
         return (
           p.name.toLowerCase().includes(q) ||
           (p.sku ?? "").toLowerCase().includes(q) ||
+          (p.barcode ?? "").toLowerCase().includes(q) ||
           (p.brand ?? "").toLowerCase().includes(q) ||
           (p.category ?? "").toLowerCase().includes(q) ||
           (p.description ?? "").toLowerCase().includes(q)
@@ -129,10 +136,10 @@ export function ProductList({ products: initial }: { products: SerializedProduct
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
+        <div>
           <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona tu catálogo de productos ({filtered.length} de {products.length})
+            Gestiona tu catálogo de productos
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -160,10 +167,29 @@ export function ProductList({ products: initial }: { products: SerializedProduct
         </Dialog>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Total</p>
+          <p className="text-xl font-bold">{products.length}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Activos</p>
+          <p className="text-xl font-bold text-emerald-600">{activeCount}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Stock bajo</p>
+          <p className="text-xl font-bold text-amber-600">{lowStockCount}</p>
+        </div>
+        <div className="rounded-lg border bg-card px-4 py-3">
+          <p className="text-xs text-muted-foreground">Agotados</p>
+          <p className="text-xl font-bold text-red-600">{outOfStockCount}</p>
+        </div>
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar productos..."
+          placeholder="Buscar por nombre, SKU, marca o categoría..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -171,7 +197,7 @@ export function ProductList({ products: initial }: { products: SerializedProduct
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-16">
           <Package className="mb-4 size-12 text-muted-foreground/50" />
           <h3 className="text-lg font-medium">
             {search ? "Sin resultados" : "No hay productos"}
@@ -189,73 +215,100 @@ export function ProductList({ products: initial }: { products: SerializedProduct
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[500px]">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+          <table className="w-full min-w-[550px]">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">Producto</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium sm:table-cell">SKU</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium md:table-cell">Marca</th>
-                <th className="hidden px-4 py-3 text-left text-sm font-medium lg:table-cell">Categoría</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Precio</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Stock</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">Estado</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">Acciones</th>
+                <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Producto</th>
+                <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">SKU</th>
+                <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">Marca</th>
+                <th className="hidden px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">Categoría</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Precio</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Stock</th>
+                <th className="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
+                <th className="px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((product) => (
-                <tr key={product.id} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="px-3 py-3 md:px-4">
-                    <div>
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground sm:hidden">
-                        {product.sku ?? ""}{product.sku && product.brand ? " · " : ""}{product.brand ?? ""}
-                      </p>
-                      <p className="text-xs text-muted-foreground md:hidden lg:hidden">
-                        {product.category ?? ""}
-                      </p>
+                <tr key={product.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
+                  <td className="px-2 py-3.5 sm:px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                        {product.image ? (
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-full items-center justify-center">
+                            <ImageIcon className="size-4 text-muted-foreground/50" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-xs text-muted-foreground sm:hidden">
+                          {product.sku ?? ""}{product.sku && product.brand ? " · " : ""}{product.brand ?? ""}
+                        </p>
+                        <p className="text-xs text-muted-foreground md:hidden lg:hidden">
+                          {product.category ?? ""}
+                        </p>
+                      </div>
                     </div>
                   </td>
-                  <td className="hidden px-4 py-3 text-xs font-mono text-muted-foreground sm:table-cell">
+                  <td className="hidden px-4 py-3.5 text-xs font-mono text-muted-foreground sm:table-cell">
                     {product.sku ?? "—"}
                   </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
+                  <td className="hidden px-4 py-3.5 text-sm text-muted-foreground md:table-cell">
                     {product.brand ?? "—"}
                   </td>
-                  <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
+                  <td className="hidden px-4 py-3.5 text-sm text-muted-foreground lg:table-cell">
                     {product.category ?? "—"}
                   </td>
-                  <td className="px-3 py-3 text-right text-sm font-medium md:px-4">
+                  <td className="px-4 py-3.5 text-right text-sm font-semibold">
                     ${Number(product.price).toFixed(2)}
                   </td>
-                  <td className={cn("px-3 py-3 text-right text-sm md:px-4", product.stock === 0 && "text-destructive")}>
-                    {product.stock}
+                  <td className={cn("px-4 py-3.5 text-right text-sm", product.stock === 0 && "text-red-600 font-medium")}>
+                    <span className={cn(
+                      "inline-flex items-center gap-1",
+                      product.stock === 0 && "text-red-600",
+                      product.stock > 0 && product.stock <= 5 && "text-amber-600"
+                    )}>
+                      {product.stock === 0 && <AlertTriangle className="size-3.5" />}
+                      {product.stock > 0 && product.stock <= 5 && <AlertTriangle className="size-3.5" />}
+                      {product.stock}
+                    </span>
                   </td>
-                  <td className="px-3 py-3 text-center md:px-4">
+                  <td className="px-4 py-3.5 text-center">
                     <Badge
                       variant={product.isActive ? "default" : "secondary"}
-                      className="cursor-pointer min-h-[24px]"
+                      className="inline-flex cursor-pointer items-center gap-1"
                       onClick={() => handleToggleStatus(product.id)}
                     >
+                      {product.isActive ? <CheckCircle2 className="size-3" /> : null}
                       {product.isActive ? "Activo" : "Inactivo"}
                     </Badge>
                   </td>
-                  <td className="px-3 py-3 text-right md:px-4">
+                  <td className="px-4 py-3.5 text-right">
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
-                        className="size-9 md:size-8"
+                        size="icon"
+                        className="size-8"
                         onClick={() => openEdit(product)}
                       >
-                        <Pencil className="size-4" />
+                        <Pencil className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
-                        className="size-9 md:size-8 text-destructive hover:text-destructive"
+                        size="icon"
+                        className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
                         onClick={() => handleDelete(product.id)}
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 className="size-3.5" />
                       </Button>
                     </div>
                   </td>
