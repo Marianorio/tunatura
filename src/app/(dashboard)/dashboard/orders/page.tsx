@@ -16,7 +16,7 @@ export default async function OrdersPage() {
     }),
     db.product.findMany({
       where: { userId, isActive: true },
-      select: { id: true, name: true, price: true, barcode: true },
+      select: { id: true, name: true, price: true, barcode: true, stock: true },
       orderBy: { name: "asc" },
     }).then((ps) => ps.map((p) => ({ ...p, price: Number(p.price) }))),
   ])

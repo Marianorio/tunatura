@@ -61,7 +61,7 @@ export function Sidebar({
     <aside
       data-sidebar={collapsed ? "collapsed" : "expanded"}
       className={cn(
-        "fixed left-0 top-0 z-30 flex h-full flex-col border-r bg-sidebar transition-all duration-300",
+        "fixed left-0 top-0 z-30 flex h-full flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300",
         collapsed ? "w-16" : "w-64"
       )}
     >

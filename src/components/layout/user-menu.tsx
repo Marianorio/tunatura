@@ -17,6 +17,7 @@ import {
   User,
   Sun,
   Moon,
+  Leaf,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -89,7 +90,13 @@ export function UserMenu() {
               <span className="ml-auto text-xs text-muted-foreground">✓</span>
             )}
           </DropdownMenuItem>
-
+          <DropdownMenuItem onClick={() => setTheme("general")}>
+            <Leaf className="mr-2 size-4" />
+            General
+            {theme === "general" && (
+              <span className="ml-auto text-xs text-muted-foreground">✓</span>
+            )}
+          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem

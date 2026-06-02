@@ -79,7 +79,7 @@ export function OrderList({
 }: {
   orders: SerializedOrder[]
   customers: Pick<Customer, "id" | "name">[]
-  products: { id: string; name: string; price: number; barcode: string | null }[]
+  products: { id: string; name: string; price: number; barcode: string | null; stock: number }[]
 }) {
   const [orders, setOrders] = useState(initial)
   const [search, setSearch] = useState("")

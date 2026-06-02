@@ -1,11 +1,12 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { useForm, useFieldArray, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { BarcodeScanner } from "@/components/ui/barcode-scanner"
-import { Loader2, Plus, X } from "lucide-react"
+import { Loader2, Plus, X, Search } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -52,7 +53,7 @@ export function OrderForm({
   isSubmitting,
 }: {
   customers: Pick<Customer, "id" | "name">[]
-  products: { id: string; name: string; price: number; barcode: string | null }[]
+  products: { id: string; name: string; price: number; barcode: string | null; stock: number }[]
   onSubmit: (values: OrderFormValues) => Promise<void>
   isSubmitting?: boolean
 }) {
@@ -70,6 +71,19 @@ export function OrderForm({
     name: "items",
   })
 
+  const [productSearch, setProductSearch] = useState("")
+  const [customerSearch, setCustomerSearch] = useState("")
+
+  const filteredProducts = useMemo(
+    () => products.filter((p) => p.name.toLowerCase().includes(productSearch.toLowerCase())),
+    [products, productSearch]
+  )
+
+  const filteredCustomers = useMemo(
+    () => customers.filter((c) => c.name.toLowerCase().includes(customerSearch.toLowerCase())),
+    [customers, customerSearch]
+  )
+
   const {
     formState: { errors },
   } = form
@@ -78,6 +92,10 @@ export function OrderForm({
   const total = watchedItems.reduce((sum, item) => {
     return sum + (item.quantity || 0) * (item.unitPrice || 0)
   }, 0)
+
+  function getStock(productId: string) {
+    return products.find((p) => p.id === productId)?.stock ?? 0
+  }
 
   function handleProductSelect(index: number, productId: string) {
     const product = products.find((p) => p.id === productId)
@@ -115,11 +133,25 @@ export function OrderForm({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {customers.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
+              <div className="relative p-2 pb-0">
+                <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Buscar cliente..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="h-8 pl-8 text-xs"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+              </div>
+              {filteredCustomers.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+              ) : (
+                filteredCustomers.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
           {errors.customerId && (
@@ -144,16 +176,35 @@ export function OrderForm({
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} — ${Number(p.price).toFixed(2)}
-                      </SelectItem>
-                    ))}
+                    <div className="relative p-2 pb-0">
+                      <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      <Input
+                        placeholder="Buscar producto..."
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="h-8 pl-8 text-xs"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    {filteredProducts.length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+                    ) : (
+                      filteredProducts.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} — ${Number(p.price).toFixed(2)} · Stock: {p.stock}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 {errors.items?.[index]?.productId && (
                   <p className="text-xs text-destructive">
                     {errors.items[index]?.productId?.message as string}
+                  </p>
+                )}
+                {form.watch(`items.${index}.productId`) && (
+                  <p className="text-xs text-muted-foreground">
+                    Stock: {getStock(form.watch(`items.${index}.productId`))}
                   </p>
                 )}
               </div>
@@ -163,6 +214,7 @@ export function OrderForm({
                   <Input
                     type="number"
                     min={1}
+                    max={getStock(form.watch(`items.${index}.productId`)) || 999}
                     placeholder="Cant."
                     value={form.watch(`items.${index}.quantity`)}
                     onChange={(e) =>

@@ -69,20 +69,39 @@ export async function getOrder(id: string) {
 export async function createOrder(data: OrderFormData) {
   const session = await auth()
   if (!session?.user?.id) throw new Error("No autorizado")
+  const userId = session.user.id
+
+  const productIds = data.items.map((i) => i.productId)
+  const products = await db.product.findMany({
+    where: { id: { in: productIds }, userId },
+    select: { id: true, stock: true, name: true },
+  })
+
+  const productMap = new Map(products.map((p) => [p.id, p]))
+
+  for (const item of data.items) {
+    const product = productMap.get(item.productId)
+    if (!product) throw new Error(`Producto "${item.productId}" no encontrado`)
+    if (product.stock < item.quantity) {
+      throw new Error(
+        `Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`
+      )
+    }
+  }
 
   const subtotals = data.items.map(
     (item) => item.quantity * item.unitPrice
   )
   const total = subtotals.reduce((sum, s) => sum + s, 0)
 
-  const count = await db.order.count({ where: { userId: session.user.id } })
+  const count = await db.order.count({ where: { userId } })
   const orderNumber = `ORD-${String(count + 1).padStart(4, "0")}`
 
   const order = await db.order.create({
     data: {
       orderNumber,
       customerId: data.customerId,
-      userId: session.user.id,
+      userId,
       status: "pending",
       total,
       notes: data.notes ?? null,
@@ -98,7 +117,17 @@ export async function createOrder(data: OrderFormData) {
     include: { customer: true, items: { include: { product: true } } },
   })
 
+  await Promise.all(
+    data.items.map((item) =>
+      db.product.update({
+        where: { id: item.productId },
+        data: { stock: { decrement: item.quantity } },
+      })
+    )
+  )
+
   revalidatePath("/dashboard/orders")
+  revalidatePath("/dashboard/products")
   return serializeOrder(order)
 }
 

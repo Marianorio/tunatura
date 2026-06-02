@@ -148,7 +148,7 @@ export function BarcodeScanner({
         </div>
       )}
 
-      <form onSubmit={handleManualSubmit} className="flex gap-2">
+      <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -159,13 +159,14 @@ export function BarcodeScanner({
               setManualCode(e.target.value)
               setNotFound(false)
             }}
+            onKeyDown={(e) => e.key === "Enter" && handleManualSubmit(e as any)}
             className="pl-9"
           />
         </div>
-        <Button type="submit" variant="secondary" size="sm" className="shrink-0">
+        <Button type="button" variant="secondary" size="sm" className="shrink-0" onClick={() => handleManualSubmit({ preventDefault: () => {} } as any)}>
           Buscar
         </Button>
-      </form>
+      </div>
 
       {notFound && (
         <p className="text-xs text-destructive">No se encontró un producto con ese código</p>
