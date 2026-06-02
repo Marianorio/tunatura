@@ -220,11 +220,11 @@ export function SalesDashboard({
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-sm" style={{ backgroundColor: "var(--color-primary)" }} />
+                <span className="size-2.5 rounded-sm bg-primary" />
                 Ingresos
               </span>
               <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-sm" style={{ backgroundColor: "var(--color-chart-2)" }} />
+                <span className="size-2.5 rounded-sm bg-chart-2" />
                 Pedidos
               </span>
             </div>
@@ -232,18 +232,18 @@ export function SalesDashboard({
           <div className="h-64 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 11 }}
-                  stroke="var(--color-muted-foreground)"
+                  stroke="hsl(var(--muted-foreground))"
                   tickLine={false}
                   axisLine={false}
                 />
                 <YAxis
                   yAxisId="left"
                   tick={{ fontSize: 11 }}
-                  stroke="var(--color-muted-foreground)"
+                  stroke="hsl(var(--muted-foreground))"
                   tickFormatter={(v) => `$${v}`}
                   tickLine={false}
                   axisLine={false}
@@ -252,7 +252,7 @@ export function SalesDashboard({
                   yAxisId="right"
                   orientation="right"
                   tick={{ fontSize: 11 }}
-                  stroke="var(--color-muted-foreground)"
+                  stroke="hsl(var(--muted-foreground))"
                   tickLine={false}
                   axisLine={false}
                   hide={true}
@@ -260,9 +260,9 @@ export function SalesDashboard({
                 <Tooltip
                   contentStyle={{
                     borderRadius: "8px",
-                    border: "1px solid var(--color-border)",
-                    backgroundColor: "var(--color-popover)",
-                    color: "var(--color-popover-foreground)",
+                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "hsl(var(--popover))",
+                    color: "hsl(var(--popover-foreground))",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                     fontSize: "13px",
                   }}
@@ -271,8 +271,8 @@ export function SalesDashboard({
                     name === "ventas" ? "Ingresos" : "Pedidos",
                   ]}
                 />
-                <Bar yAxisId="left" dataKey="ventas" fill="var(--color-primary)" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                <Bar yAxisId="right" dataKey="pedidos" fill="var(--color-chart-2)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                <Bar yAxisId="left" dataKey="ventas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                <Bar yAxisId="right" dataKey="pedidos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           </div>

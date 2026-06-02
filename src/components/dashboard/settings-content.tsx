@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Sun, Moon, Monitor, Mail, User as UserIcon, Shield } from "lucide-react"
+import { Sun, Moon, Monitor, Leaf, Mail, User as UserIcon, Shield } from "lucide-react"
 import type { User } from "next-auth"
 
 export function SettingsView({ user }: { user?: User }) {
@@ -79,13 +79,17 @@ export function SettingsView({ user }: { user?: User }) {
             <Select value={theme} onValueChange={(v) => setTheme(v!)}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue>
-                  {theme === "light" ? "Claro" : "Oscuro"}
+                  {theme === "light" ? "Claro" : theme === "general" ? "General" : "Oscuro"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="light">
                   <Sun className="mr-2 size-4 inline" />
                   Claro
+                </SelectItem>
+                <SelectItem value="general">
+                  <Leaf className="mr-2 size-4 inline" />
+                  General
                 </SelectItem>
                 <SelectItem value="dark">
                   <Moon className="mr-2 size-4 inline" />
