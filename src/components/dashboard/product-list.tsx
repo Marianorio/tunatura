@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Pencil, Trash2, Plus, Package, Search, Tag, AlertTriangle, CheckCircle2, ImageIcon } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Pencil, Trash2, Plus, Package, Search, Tag, AlertTriangle, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -63,6 +63,13 @@ export function ProductList({ products: initial }: { products: SerializedProduct
       }),
     [products, search]
   )
+
+  const PAGE_SIZE = 10
+  const [page, setPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page])
+
+  useEffect(() => { setPage(1) }, [search])
 
   async function refresh() {
     const data = await getProducts()
@@ -230,7 +237,7 @@ export function ProductList({ products: initial }: { products: SerializedProduct
               </tr>
             </thead>
             <tbody>
-              {filtered.map((product) => (
+              {paginated.map((product) => (
                 <tr key={product.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
                   <td className="px-2 py-3.5 sm:px-4">
                     <div className="flex items-center gap-3">
@@ -316,6 +323,26 @@ export function ProductList({ products: initial }: { products: SerializedProduct
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="size-8" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="size-8 text-xs" onClick={() => setPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="icon" className="size-8" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>

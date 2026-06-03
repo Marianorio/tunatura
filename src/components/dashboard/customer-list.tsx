@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Pencil, Trash2, Plus, Users, Search, Phone, Mail, MapPin, UserCheck } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Pencil, Trash2, Plus, Users, Search, Phone, Mail, MapPin, UserCheck, ChevronLeft, ChevronRight } from "lucide-react"
 import type { Customer } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +38,13 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
       }),
     [customers, search]
   )
+
+  const PAGE_SIZE = 10
+  const [page, setPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page])
+
+  useEffect(() => { setPage(1) }, [search])
 
   async function refresh() {
     const data = await getCustomers()
@@ -187,7 +194,7 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
       ) : (
         <>
           <div className="grid gap-3 sm:hidden">
-            {filtered.map((customer) => (
+            {paginated.map((customer) => (
               <div key={customer.id} className="rounded-xl border bg-card p-4 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1">
@@ -246,7 +253,7 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((customer) => (
+                {paginated.map((customer) => (
                   <tr key={customer.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
@@ -311,8 +318,28 @@ export function CustomerList({ customers: initial }: { customers: Customer[] }) 
                 ))}
               </tbody>
             </table>
+            </div>
+          </>
+        )}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="size-8" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="size-8 text-xs" onClick={() => setPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="icon" className="size-8" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

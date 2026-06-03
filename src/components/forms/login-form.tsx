@@ -27,16 +27,16 @@ export function LoginForm() {
   return (
     <div className="flex min-h-screen">
       <div className="relative hidden w-1/2 lg:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F3D37] to-[#1E6F5C]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/80" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
           <div className="mb-6">
             <Image
               src="/tunaturalogo2.png"
               alt={APP_NAME}
-              width={80}
-              height={80}
-              className="size-20 brightness-0 invert"
+              width={240}
+              height={240}
+              className="size-60 brightness-0 invert"
             />
           </div>
           <h1 className="mb-3 text-center text-3xl font-bold tracking-tight">
@@ -65,13 +65,13 @@ export function LoginForm() {
       <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center lg:hidden">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center">
+            <div className="mx-auto mb-4 flex items-center justify-center">
               <Image
                 src="/tunaturalogo2.png"
                 alt={APP_NAME}
-                width={64}
-                height={64}
-                className="size-16 object-contain"
+                width={96}
+                height={96}
+                className="size-24 object-contain"
               />
             </div>
             <h1 className="text-2xl font-bold text-primary">{APP_NAME}</h1>

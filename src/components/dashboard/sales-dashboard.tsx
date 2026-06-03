@@ -47,6 +47,31 @@ function formatCurrency(value: number) {
   return `$${value.toFixed(2)}`
 }
 
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border bg-popover/95 backdrop-blur-sm px-4 py-3 shadow-xl">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="space-y-1">
+        {payload.map((entry) => (
+          <div key={entry.name} className="flex items-center gap-2 text-sm">
+            <span
+              className="size-2.5 rounded-[3px] shadow-sm"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground">
+              {entry.name === "ventas" ? "Ingresos" : "Pedidos"}:
+            </span>
+            <span className="font-semibold tabular-nums">
+              {entry.name === "ventas" ? formatCurrency(entry.value) : entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive"; color: string; bg: string }> = {
   pending: { label: "Pendiente", variant: "secondary", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/20" },
   confirmed: { label: "Confirmado", variant: "default", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/20" },
@@ -212,69 +237,92 @@ export function SalesDashboard({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border bg-card p-5 shadow-sm">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold">Ventas mensuales</h3>
-              <p className="text-xs text-muted-foreground">Evolución de ingresos por mes</p>
+        <div className="lg:col-span-2 relative overflow-hidden rounded-xl border bg-card shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] to-transparent pointer-events-none" />
+          <div className="relative p-6">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-sm font-semibold">Ventas mensuales</h3>
+                <p className="text-xs text-muted-foreground">Evolución de ingresos por mes</p>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="text-right">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Ingresos</p>
+                  <p className="text-lg font-bold tabular-nums">{formatCurrency(totalRevenue)}</p>
+                  {revenueTrend !== null && (
+                    <p className={cn("text-xs font-medium", Number(revenueTrend) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                      {Number(revenueTrend) >= 0 ? "↑" : "↓"} {Math.abs(Number(revenueTrend))}%
+                    </p>
+                  )}
+                </div>
+                <div className="h-10 w-px bg-border" />
+                <div className="text-right">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Pedidos</p>
+                  <p className="text-lg font-bold tabular-nums">{totalOrders}</p>
+                  <p className="text-xs text-muted-foreground">{pendingOrders} pendientes</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-sm bg-primary" />
+            <div className="flex items-center gap-4 mb-5">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                <span className="size-2.5 rounded-[3px] shadow-sm" style={{ backgroundColor: "var(--chart-ingresos)" }} />
                 Ingresos
               </span>
-              <span className="flex items-center gap-1">
-                <span className="size-2.5 rounded-sm bg-chart-2" />
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                <span className="size-2.5 rounded-[3px] shadow-sm" style={{ backgroundColor: "var(--chart-pedidos)" }} />
                 Pedidos
               </span>
             </div>
-          </div>
-          <div className="h-64 sm:h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11 }}
-                  stroke="hsl(var(--muted-foreground))"
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 11 }}
-                  stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(v) => `$${v}`}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 11 }}
-                  stroke="hsl(var(--muted-foreground))"
-                  tickLine={false}
-                  axisLine={false}
-                  hide={true}
-                />
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid hsl(var(--border))",
-                    backgroundColor: "hsl(var(--popover))",
-                    color: "hsl(var(--popover-foreground))",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                    fontSize: "13px",
-                  }}
-                  formatter={(value, name) => [
-                    name === "ventas" ? formatCurrency(Number(value)) : value,
-                    name === "ventas" ? "Ingresos" : "Pedidos",
-                  ]}
-                />
-                <Bar yAxisId="left" dataKey="ventas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                <Bar yAxisId="right" dataKey="pedidos" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-64 sm:h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData} barCategoryGap="18%" barGap={6}>
+                  <defs>
+                    <linearGradient id="ventasGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--chart-ingresos)" stopOpacity={1} />
+                      <stop offset="100%" stopColor="var(--chart-ingresos)" stopOpacity={0.5} />
+                    </linearGradient>
+                    <linearGradient id="pedidosGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--chart-pedidos)" stopOpacity={1} />
+                      <stop offset="100%" stopColor="var(--chart-pedidos)" stopOpacity={0.5} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} strokeOpacity={0.4} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={({ x, y, payload, index }) => {
+                      const isLast = index === monthlyData.length - 1
+                      return (
+                        <text x={x} y={y} textAnchor="middle" fontSize={11} fontWeight={isLast ? 600 : 400} fill={isLast ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))"}>
+                          {payload.value}
+                        </text>
+                      )
+                    }}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 11 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    tickFormatter={(v) => `$${v}`}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11 }}
+                    stroke="hsl(var(--muted-foreground))"
+                    tickLine={false}
+                    axisLine={false}
+                    hide={true}
+                  />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }} />
+                  <Bar yAxisId="left" dataKey="ventas" fill="url(#ventasGradient)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                  <Bar yAxisId="right" dataKey="pedidos" fill="url(#pedidosGradient)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -309,8 +357,8 @@ export function SalesDashboard({
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${barWidth}%` }}
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${barWidth}%`, backgroundColor: "var(--chart-ingresos)" }}
                       />
                     </div>
                   </div>

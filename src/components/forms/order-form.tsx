@@ -20,6 +20,7 @@ import type { Customer } from "@prisma/client"
 
 const orderSchema = z.object({
   customerId: z.string().min(1, "Seleccioná un cliente"),
+  cuotas: z.coerce.number().int().min(1).optional(),
   notes: z.string().optional(),
   items: z
     .array(
@@ -42,6 +43,7 @@ type OrderItemForm = {
 
 export type OrderFormValues = {
   customerId: string
+  cuotas?: number
   notes?: string
   items: OrderItemForm[]
 }
@@ -61,6 +63,7 @@ export function OrderForm({
     resolver: zodResolver(orderSchema) as any,
     defaultValues: {
       customerId: "",
+      cuotas: 1,
       notes: "",
       items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
     },
@@ -159,13 +162,25 @@ export function OrderForm({
           )}
         </div>
 
+        <div className="flex items-center gap-3">
+          <Label className="shrink-0">Cuotas</Label>
+          <Input
+            type="number"
+            min={1}
+            placeholder="1"
+            className="w-20"
+            value={form.watch("cuotas") ?? 1}
+            onChange={(e) => form.setValue("cuotas", parseInt(e.target.value) || 1)}
+          />
+        </div>
+
         <BarcodeScanner products={products} onScan={handleBarcodeScan} />
 
         <div className="space-y-3">
           <Label>Productos</Label>
           {fields.map((field, index) => (
-            <div key={field.id} className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-2">
-              <div className="flex-1 space-y-2">
+            <div key={field.id} className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
+              <div className="flex-1 min-w-0">
                 <Select
                   value={form.watch(`items.${index}.productId`)}
                   onValueChange={(v) => handleProductSelect(index, v!)}
@@ -208,9 +223,9 @@ export function OrderForm({
                   </p>
                 )}
               </div>
-              <div className="flex items-end gap-2 sm:w-auto">
-                <div className="w-20 space-y-2">
-                  <Label className="text-xs sm:hidden">Cant.</Label>
+              <div className="flex items-start gap-2">
+                <div className="w-20">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Cant.</Label>
                   <Input
                     type="number"
                     min={1}
@@ -230,7 +245,7 @@ export function OrderForm({
                     </p>
                   )}
                 </div>
-                <div className="w-24 pb-2 text-right text-sm font-medium sm:pb-0 sm:pt-2">
+                <div className="w-20 pt-6 text-right text-sm font-medium">
                   ${(
                     (form.watch(`items.${index}.quantity`) || 0) *
                     (form.watch(`items.${index}.unitPrice`) || 0)
@@ -242,7 +257,7 @@ export function OrderForm({
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => remove(index)}
-                    className="mb-0 sm:mb-0"
+                    className="mt-6"
                   >
                     <X className="size-4" />
                   </Button>

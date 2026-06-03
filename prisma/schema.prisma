@@ -102,6 +102,7 @@ model Order {
   userId      String
   status      String   @default("pending")
   total       Decimal  @db.Decimal(10, 2)
+  cuotas      Int      @default(1)
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

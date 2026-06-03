@@ -29,6 +29,8 @@
   --chart-3: #4CAF86;
   --chart-4: #FF9F6E;
   --chart-5: #374151;
+  --chart-ingresos: #FF9F6E;
+  --chart-pedidos: #D4794A;
   --radius: 0.625rem;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #111827;
@@ -65,6 +67,8 @@
   --chart-3: #0F3D37;
   --chart-4: #FF9F6E;
   --chart-5: #1F2937;
+  --chart-ingresos: #6BCF9E;
+  --chart-pedidos: #2D4A3E;
   --sidebar: #0F3D37;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #4CAF86;
@@ -88,7 +92,7 @@
   --secondary-foreground: #FFFFFF;
   --muted: #F1F3F5;
   --muted-foreground: #6B7280;
-  --accent: #FF9F6E;
+  --accent: #D4EDDA;
   --accent-foreground: #111827;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
@@ -100,6 +104,8 @@
   --chart-3: #4CAF86;
   --chart-4: #FF9F6E;
   --chart-5: #374151;
+  --chart-ingresos: #1E6F5C;
+  --chart-pedidos: #4CAF86;
   --radius: 0.625rem;
   --sidebar: #1E6F5C;
   --sidebar-foreground: #FFFFFF;
@@ -136,6 +142,8 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-ingresos: var(--chart-ingresos);
+  --color-chart-pedidos: var(--chart-pedidos);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -161,4 +169,14 @@
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
   }
+}
+
+html.font-size-large,
+.font-size-large {
+  font-size: 125% !important;
+}
+
+html.font-size-xlarge,
+.font-size-xlarge {
+  font-size: 150% !important;
 }

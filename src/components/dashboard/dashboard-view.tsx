@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight } from "lucide-react"
+import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight, LayoutDashboard, DollarSign, TrendingUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -62,7 +62,7 @@ export function DashboardView({
           </p>
         </div>
         <Link
-          href="/dashboard/orders"
+          href="/dashboard/orders?openForm=true"
           className="inline-flex h-9 items-center justify-center rounded-lg border bg-card px-4 text-sm font-medium shadow-sm transition-colors hover:bg-muted"
         >
           <Plus className="mr-2 size-4" />
@@ -246,6 +246,31 @@ export function DashboardView({
           <span>Nuevo cliente</span>
           <ArrowRight className="ml-auto size-4 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground" />
         </Link>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm lg:hidden">
+        <div className="flex items-center justify-around py-1.5 px-2">
+          <Link href="/dashboard" className="flex flex-col items-center gap-0.5 text-[10px] text-primary font-medium">
+            <LayoutDashboard className="size-5" />
+            Inicio
+          </Link>
+          <Link href="/dashboard/products" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <Package className="size-5" />
+            Productos
+          </Link>
+          <Link href="/dashboard/orders" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <ShoppingCart className="size-5" />
+            Pedidos
+          </Link>
+          <Link href="/dashboard/debts" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <DollarSign className="size-5" />
+            Deudas
+          </Link>
+          <Link href="/dashboard/sales" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+            <TrendingUp className="size-5" />
+            Ventas
+          </Link>
+        </div>
       </div>
     </div>
   )

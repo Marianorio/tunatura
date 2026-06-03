@@ -7,6 +7,7 @@ import { db } from "@/server/db"
 export type OrderFormData = {
   customerId: string
   notes?: string
+  cuotas?: number
   items: { productId: string; quantity: number; unitPrice: number }[]
 }
 
@@ -104,6 +105,7 @@ export async function createOrder(data: OrderFormData) {
       userId,
       status: "pending",
       total,
+      cuotas: data.cuotas ?? 1,
       notes: data.notes ?? null,
       items: {
         create: data.items.map((item) => ({

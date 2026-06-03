@@ -82,7 +82,7 @@ export async function getCustomerDebts() {
     where: { userId: session.user.id },
     include: {
       orders: {
-        select: { id: true, orderNumber: true, total: true, createdAt: true, status: true },
+        select: { id: true, orderNumber: true, total: true, cuotas: true, createdAt: true, status: true },
       },
     },
     orderBy: { name: "asc" },
@@ -100,6 +100,7 @@ export async function getCustomerDebts() {
           id: o.id,
           orderNumber: o.orderNumber,
           total: Number(o.total),
+          cuotas: o.cuotas,
           createdAt: o.createdAt,
         })),
       }

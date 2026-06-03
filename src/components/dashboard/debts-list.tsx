@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Search, DollarSign, Phone, CalendarDays, ChevronRight, AlertTriangle, Clock } from "lucide-react"
+import { useState, useMemo, useEffect } from "react"
+import { Search, DollarSign, Phone, CalendarDays, ChevronRight, AlertTriangle, Clock, ChevronLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ type UnpaidOrder = {
   id: string
   orderNumber: string
   total: number
+  cuotas: number
   createdAt: Date
 }
 
@@ -56,6 +57,13 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
       }),
     [sortedByDebt, search]
   )
+
+  const PAGE_SIZE = 10
+  const [page, setPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const paginated = useMemo(() => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE), [filtered, page])
+
+  useEffect(() => { setPage(1) }, [search])
 
   const totalOutstanding = debts.reduce((s, d) => s + d.totalDebt, 0)
   const criticalCount = debts.filter((d) => daysSince(d.unpaidOrders[0]?.createdAt ?? new Date()) >= 30).length
@@ -126,7 +134,7 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((customer) => {
+          {paginated.map((customer) => {
             const oldestDays = daysSince(customer.unpaidOrders[customer.unpaidOrders.length - 1]?.createdAt ?? new Date())
             const urgency = getUrgency(oldestDays)
             return (
@@ -170,6 +178,11 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
                             <CalendarDays className="size-3" />
                             {new Date(order.createdAt).toLocaleDateString("es-AR")}
                           </span>
+                          {order.cuotas > 1 && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0">
+                              {order.cuotas} cuotas · ${(order.total / order.cuotas).toFixed(2)}/mes
+                            </span>
+                          )}
                           <span className={cn("text-xs font-medium shrink-0", urgency.color)}>
                             ({days}d)
                           </span>
@@ -193,6 +206,26 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
               </div>
             )
           })}
+        </div>
+      )}
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="size-8" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Button key={p} variant={p === page ? "default" : "outline"} size="icon" className="size-8 text-xs" onClick={() => setPage(p)}>
+                {p}
+              </Button>
+            ))}
+            <Button variant="outline" size="icon" className="size-8" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
