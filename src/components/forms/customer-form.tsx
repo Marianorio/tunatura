@@ -27,8 +27,14 @@ const countries = [
   { code: "ARG", prefix: "+54", name: "Argentina" },
   { code: "BOL", prefix: "+591", name: "Bolivia" },
   { code: "BRA", prefix: "+55", name: "Brasil" },
-  { code: "URU", prefix: "+598", name: "Uruguay" },
+  { code: "CHL", prefix: "+56", name: "Chile" },
+  { code: "COL", prefix: "+57", name: "Colombia" },
+  { code: "ECU", prefix: "+593", name: "Ecuador" },
+  { code: "MEX", prefix: "+52", name: "México" },
   { code: "PRY", prefix: "+595", name: "Paraguay" },
+  { code: "PER", prefix: "+51", name: "Perú" },
+  { code: "URY", prefix: "+598", name: "Uruguay" },
+  { code: "VEN", prefix: "+58", name: "Venezuela" },
 ] as const
 
 const defaultCountry = countries[0]

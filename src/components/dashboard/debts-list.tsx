@@ -6,9 +6,18 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { getCustomerDebts } from "@/server/customers"
-import { updateOrderStatus } from "@/server/orders"
+import { payCuota } from "@/server/cuotas"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+
+type CuotaRecord = {
+  id: string
+  numero: number
+  monto: number
+  vencimiento: Date
+  pagada: boolean
+  fechaPago: Date | null
+}
 
 type UnpaidOrder = {
   id: string
@@ -16,6 +25,7 @@ type UnpaidOrder = {
   total: number
   cuotas: number
   createdAt: Date
+  cuotaRecords: CuotaRecord[]
 }
 
 type CustomerDebt = {
@@ -73,13 +83,13 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
     setDebts(data)
   }
 
-  async function handleMarkPaid(orderId: string) {
+  async function handlePayCuota(cuotaId: string) {
     try {
-      await updateOrderStatus(orderId, "confirmed")
-      toast.success("Pedido confirmado")
+      await payCuota(cuotaId)
+      toast.success("Cuota marcada como pagada")
       await refresh()
     } catch (e) {
-      toast.error("Error al confirmar el pedido")
+      toast.error("Error al pagar la cuota")
       console.error(e)
     }
   }
@@ -167,38 +177,64 @@ export function DebtsList({ initial }: { initial: CustomerDebt[] }) {
                 </div>
                 <div className="divide-y">
                   {customer.unpaidOrders.map((order) => {
-                    const days = daysSince(order.createdAt)
-                    const urgency = getUrgency(days)
+                    const records = order.cuotaRecords.length > 0 ? order.cuotaRecords
+                      : [{ id: order.id, numero: 1, monto: order.total, vencimiento: order.createdAt, pagada: false, fechaPago: null }]
+                    const pendientes = records.filter((r) => !r.pagada)
                     return (
-                      <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 transition-colors hover:bg-muted/20">
-                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/50" />
-                          <span className="text-sm font-mono font-medium">{order.orderNumber}</span>
-                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                            <CalendarDays className="size-3" />
+                      <div key={order.id}>
+                        <div className="flex items-center gap-2 border-b bg-muted/20 px-5 py-2">
+                          <span className="text-xs font-mono font-medium text-muted-foreground">{order.orderNumber}</span>
+                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">
                             {new Date(order.createdAt).toLocaleDateString("es-AR")}
                           </span>
-                          {order.cuotas > 1 && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground shrink-0">
-                              {order.cuotas} cuotas · ${(order.total / order.cuotas).toFixed(2)}/mes
+                          {pendientes.length > 0 && (
+                            <span className="ml-auto text-xs font-medium text-red-500">
+                              ${pendientes.reduce((s, r) => s + r.monto, 0).toFixed(2)} pendiente
                             </span>
                           )}
-                          <span className={cn("text-xs font-medium shrink-0", urgency.color)}>
-                            ({days}d)
-                          </span>
                         </div>
-                        <div className="flex shrink-0 items-center gap-3">
-                          <span className="text-sm font-semibold">${order.total.toFixed(2)}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
-                            onClick={() => handleMarkPaid(order.id)}
-                          >
-                            <DollarSign className="mr-1 size-3" />
-                            Pagado
-                          </Button>
-                        </div>
+                        {records.map((cr) => {
+                          const days = daysSince(cr.vencimiento)
+                          const vencida = !cr.pagada && days > 0
+                          return (
+                            <div key={cr.id} className={cn("flex flex-wrap items-center justify-between gap-2 px-5 py-2.5 transition-colors hover:bg-muted/10", cr.pagada && "opacity-50")}>
+                              <div className="flex min-w-0 flex-1 items-center gap-3">
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                                  style={{ backgroundColor: cr.pagada ? undefined : vencida ? "#FEE2E2" : "#FEF3C7", color: cr.pagada ? "#22C55E" : vencida ? "#DC2626" : "#D97706" }}
+                                >
+                                  {cr.pagada ? "✓" : cr.numero}
+                                </span>
+                                <span className="text-sm">
+                                  <span className="font-medium">${cr.monto.toFixed(2)}</span>
+                                  <span className="text-xs text-muted-foreground"> · Cuota {cr.numero}/{order.cuotas}</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                  <CalendarDays className="size-3" />
+                                  {new Date(cr.vencimiento).toLocaleDateString("es-AR")}
+                                </span>
+                                {cr.pagada ? (
+                                  <span className="text-xs font-medium text-emerald-600">Pagada</span>
+                                ) : vencida ? (
+                                  <span className="text-xs font-medium text-red-500">Vencida ({days}d)</span>
+                                ) : (
+                                  <span className="text-xs font-medium text-amber-500">({-days}d)</span>
+                                )}
+                              </div>
+                              {!cr.pagada && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-xs border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                                  onClick={() => handlePayCuota(cr.id)}
+                                >
+                                  <DollarSign className="mr-1 size-3" />
+                                  Pagar
+                                </Button>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )
                   })}

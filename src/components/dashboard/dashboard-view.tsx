@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight, LayoutDashboard, DollarSign, TrendingUp } from "lucide-react"
+import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight, LayoutDashboard, DollarSign, TrendingUp, Calendar, Box, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -29,9 +29,28 @@ type SerializedProduct = {
   category: string | null
   description: string | null
   image: string | null
+  expirationDate: Date | null
   userId: string
   createdAt: Date
   updatedAt: Date
+}
+
+type ExpiringItem = {
+  id: string
+  cantidad: number
+  fechaVencimiento: Date | null
+  product: { id: string; name: string }
+  caja: { nombre: string }
+}
+
+type PendingCuota = {
+  id: string
+  numero: number
+  totalCuotas: number
+  monto: number
+  vencimiento: Date
+  orderNumber: string
+  customerName: string
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
@@ -41,15 +60,25 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
   cancelled: { label: "Cancelado", variant: "destructive" },
 }
 
+function daysSince(date: Date) {
+  const now = new Date()
+  const diff = now.getTime() - new Date(date).getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
+
 export function DashboardView({
   pendingOrders,
   lowStockProducts,
   recentOrders,
+  expiringProducts,
+  pendingCuotas,
   userName,
 }: {
   pendingOrders: SerializedOrder[]
   lowStockProducts: SerializedProduct[]
   recentOrders: SerializedOrder[]
+  expiringProducts: ExpiringItem[]
+  pendingCuotas: PendingCuota[]
   userName: string
 }) {
   return (
@@ -91,15 +120,26 @@ export function DashboardView({
           </div>
           {pendingOrders.length > 0 ? (
             <div className="space-y-2">
-              {pendingOrders.map((order) => (
+              {[...pendingOrders]
+                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                .slice(0, 5)
+                .map((order) => (
                 <Link
                   key={order.id}
                   href="/dashboard/orders"
                   className="flex items-center justify-between rounded-lg bg-muted/30 px-3.5 py-2.5 transition-colors hover:bg-muted/50"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-sm font-mono font-medium shrink-0">
-                      {order.orderNumber}
+                    <span className={cn(
+                      "flex items-center gap-1.5 text-sm shrink-0",
+                      daysSince(order.createdAt) >= 60
+                        ? "text-red-500"
+                        : daysSince(order.createdAt) >= 30
+                          ? "text-orange-500"
+                          : "text-muted-foreground"
+                    )}>
+                      <Calendar className="size-3.5" />
+                      {daysSince(order.createdAt)} d
                     </span>
                     <span className="truncate text-sm text-muted-foreground">
                       {order.customer.name}
@@ -141,7 +181,10 @@ export function DashboardView({
           </div>
           {lowStockProducts.length > 0 ? (
             <div className="space-y-2">
-              {lowStockProducts.map((product) => (
+              {[...lowStockProducts]
+                .sort((a, b) => a.stock - b.stock)
+                .slice(0, 5)
+                .map((product) => (
                 <Link
                   key={product.id}
                   href="/dashboard/products"
@@ -184,7 +227,7 @@ export function DashboardView({
             <table className="w-full min-w-[450px]">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pedido</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Fecha</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cliente</th>
                   <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">Estado</th>
@@ -195,7 +238,7 @@ export function DashboardView({
                   const status = statusConfig[order.status] ?? statusConfig.pending
                   return (
                     <tr key={order.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
-                      <td className="px-4 py-3 text-sm font-mono font-medium">{order.orderNumber}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleDateString("es-AR")}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{order.customer.name}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold">${Number(order.total).toFixed(2)}</td>
                       <td className="px-4 py-3 text-center">
@@ -211,6 +254,112 @@ export function DashboardView({
           <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
             <ShoppingCart className="mb-2 size-8 text-muted-foreground/50" />
             No hay pedidos aún
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle className="size-4 text-amber-500" />
+            Próximos a vencer
+            {expiringProducts.length > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {expiringProducts.length}
+              </Badge>
+            )}
+          </h3>
+          <Link
+            href="/dashboard/products"
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Ver todos →
+          </Link>
+        </div>
+        {expiringProducts.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[450px]">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Producto</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vence el</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Días restantes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expiringProducts.map((item) => {
+                  const daysLeft = Math.ceil((new Date(item.fechaVencimiento!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  return (
+                    <tr key={item.id} className="border-b last:border-0 transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm font-medium">
+                        {item.product.name}
+                        <span className="ml-1.5 text-xs text-muted-foreground">({item.caja.nombre})</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(item.fechaVencimiento!).toLocaleDateString("es-AR")}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold">
+                        <span className={cn(
+                          daysLeft < 0 ? "text-red-500" : daysLeft <= 7 ? "text-orange-500" : "text-amber-500"
+                        )}>
+                          {daysLeft < 0 ? `${Math.abs(daysLeft)} d vencido` : `${daysLeft} d`}
+                        </span>
+                        <span className="ml-1 text-xs font-normal text-muted-foreground">· {item.cantidad} uds.</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
+            <Package className="mb-2 size-8 text-emerald-400" />
+            No hay productos próximos a vencer
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <CreditCard className="size-4 text-amber-500" />
+            Próximos vencimientos de cuotas
+            {pendingCuotas.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{pendingCuotas.length}</Badge>
+            )}
+          </h3>
+          <Link href="/dashboard/debts" className="text-xs text-muted-foreground transition-colors hover:text-foreground">
+            Ver todos →
+          </Link>
+        </div>
+        {pendingCuotas.length > 0 ? (
+          <div className="space-y-2">
+            {pendingCuotas.slice(0, 5).map((c) => {
+              const daysLeft = Math.ceil((new Date(c.vencimiento).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              return (
+                <div key={c.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3.5 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                      {c.numero}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{c.customerName}</p>
+                      <p className="text-xs text-muted-foreground">{c.orderNumber} · Cuota {c.numero}/{c.totalCuotas}</p>
+                    </div>
+                  </div>
+                  <div className="ml-2 shrink-0 text-right">
+                    <p className="text-sm font-semibold">${c.monto.toFixed(2)}</p>
+                    <p className={cn("text-xs", daysLeft < 0 ? "text-red-500" : daysLeft <= 3 ? "text-orange-500" : "text-muted-foreground")}>
+                      {daysLeft < 0 ? `Vencida (${Math.abs(daysLeft)}d)` : `En ${daysLeft} d`}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
+            <CreditCard className="mb-2 size-8 text-emerald-400" />
+            No hay cuotas pendientes
           </div>
         )}
       </div>
@@ -231,9 +380,9 @@ export function DashboardView({
           className="group flex items-center gap-3 rounded-xl border bg-card px-5 py-4 text-sm font-medium shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5"
         >
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-            <Package className="size-4 text-primary" />
+            <Box className="size-4 text-primary" />
           </div>
-          <span>Nuevo producto</span>
+          <span>Registrar caja</span>
           <ArrowRight className="ml-auto size-4 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground" />
         </Link>
         <Link

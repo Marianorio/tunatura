@@ -115,8 +115,20 @@ export async function createOrder(data: OrderFormData) {
           subtotal: item.quantity * item.unitPrice,
         })),
       },
+      cuotaRecords: (data.cuotas ?? 1) > 1
+        ? {
+            create: Array.from({ length: data.cuotas ?? 1 }, (_, i) => ({
+              numero: i + 1,
+              monto: Number(total) / (data.cuotas ?? 1),
+              vencimiento: new Date(Date.now() + (i + 1) * 30 * 24 * 60 * 60 * 1000),
+            })),
+          }
+        : undefined,
     },
-    include: { customer: true, items: { include: { product: true } } },
+    include: {
+      customer: true,
+      items: { include: { product: true } },
+    },
   })
 
   await Promise.all(

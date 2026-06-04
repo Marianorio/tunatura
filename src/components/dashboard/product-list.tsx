@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Pencil, Trash2, Plus, Package, Search, Tag, AlertTriangle, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { Pencil, Trash2, Plus, Package, Search, Tag, AlertTriangle, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight, Box, Calendar, Trash } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog"
 import { ProductForm, type ProductFormValues } from "@/components/forms/product-form"
 import { getProducts, createProduct, updateProduct, deleteProduct, toggleProductStatus } from "@/server/products"
+import { getCajas, deleteCaja } from "@/server/cajas"
+import { RegistrarCaja } from "@/components/forms/registrar-caja"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -37,8 +39,10 @@ type SerializedProduct = {
   updatedAt: Date
 }
 
-export function ProductList({ products: initial }: { products: SerializedProduct[] }) {
+export function ProductList({ products: initial, initialCajas }: { products: SerializedProduct[], initialCajas: any[] }) {
   const [products, setProducts] = useState(initial)
+  const [cajas, setCajas] = useState(initialCajas)
+  const [cajaPage, setCajaPage] = useState(1)
   const [search, setSearch] = useState("")
   const [editingProduct, setEditingProduct] = useState<SerializedProduct | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -74,6 +78,24 @@ export function ProductList({ products: initial }: { products: SerializedProduct
   async function refresh() {
     const data = await getProducts()
     setProducts(data)
+  }
+
+  async function refreshCajas() {
+    const data = await getCajas()
+    setCajas(data)
+  }
+
+  async function handleDeleteCaja(id: string) {
+    if (!confirm("¿Estás seguro de eliminar esta caja? El stock se descontará automáticamente.")) return
+    try {
+      await deleteCaja(id)
+      toast.success("Caja eliminada")
+      await refreshCajas()
+      await refresh()
+    } catch (e) {
+      toast.error("Error al eliminar la caja")
+      console.error(e)
+    }
   }
 
   async function handleCreate(values: ProductFormValues) {
@@ -149,11 +171,13 @@ export function ProductList({ products: initial }: { products: SerializedProduct
             Gestiona tu catálogo de productos
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <Button onClick={openCreate}>
-            <Plus className="mr-2 size-4" />
-            Nuevo producto
-          </Button>
+        <div className="flex items-center gap-2">
+          <RegistrarCaja products={products} onSuccess={() => { refreshCajas(); refresh() }} />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Button onClick={openCreate}>
+              <Plus className="mr-2 size-4" />
+              Nuevo producto
+            </Button>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -172,6 +196,7 @@ export function ProductList({ products: initial }: { products: SerializedProduct
             />
           </DialogContent>
         </Dialog>
+      </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
@@ -345,6 +370,88 @@ export function ProductList({ products: initial }: { products: SerializedProduct
           </div>
         </div>
       )}
+
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Box className="size-4 text-muted-foreground" />
+            Cajas recibidas
+            {cajas.length > 0 && (
+              <Badge variant="secondary" className="ml-1">{cajas.length}</Badge>
+            )}
+          </h3>
+        </div>
+        {cajas.length > 0 ? (
+          <div className="space-y-3">
+            {cajas
+              .slice((cajaPage - 1) * 3, cajaPage * 3)
+              .map((caja) => {
+              const totalItems = caja.items.reduce((s: number, i: any) => s + i.cantidad, 0)
+              return (
+                <div key={caja.id} className="rounded-lg border bg-muted/20 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{caja.nombre}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {totalItems} uds.
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        <Calendar className="mr-1 inline size-3" />
+                        {new Date(caja.fechaRecibida).toLocaleDateString("es-AR")}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        onClick={() => handleDeleteCaja(caja.id)}
+                      >
+                        <Trash className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    {caja.items.map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{item.product.name}</span>
+                        <div className="flex items-center gap-3">
+                          {item.fechaVencimiento && (
+                            <span className="text-xs text-muted-foreground">
+                              Vence: {new Date(item.fechaVencimiento).toLocaleDateString("es-AR")}
+                            </span>
+                          )}
+                          <span className="font-medium">{item.cantidad} uds.</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+            {cajas.length > 3 && (
+              <div className="flex items-center justify-between pt-1">
+                <p className="text-xs text-muted-foreground">
+                  Página {cajaPage} de {Math.ceil(cajas.length / 3)}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="size-7" disabled={cajaPage <= 1} onClick={() => setCajaPage(cajaPage - 1)}>
+                    <ChevronLeft className="size-3.5" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="size-7" disabled={cajaPage >= Math.ceil(cajas.length / 3)} onClick={() => setCajaPage(cajaPage + 1)}>
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-sm text-muted-foreground">
+            <Package className="mb-2 size-8 text-muted-foreground/50" />
+            No hay cajas registradas
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -82,7 +82,18 @@ export async function getCustomerDebts() {
     where: { userId: session.user.id },
     include: {
       orders: {
-        select: { id: true, orderNumber: true, total: true, cuotas: true, createdAt: true, status: true },
+        select: {
+          id: true,
+          orderNumber: true,
+          total: true,
+          cuotas: true,
+          createdAt: true,
+          status: true,
+          cuotaRecords: {
+            select: { id: true, numero: true, monto: true, vencimiento: true, pagada: true, fechaPago: true },
+            orderBy: { numero: "asc" },
+          },
+        },
       },
     },
     orderBy: { name: "asc" },
@@ -102,6 +113,14 @@ export async function getCustomerDebts() {
           total: Number(o.total),
           cuotas: o.cuotas,
           createdAt: o.createdAt,
+          cuotaRecords: o.cuotaRecords.map((cr) => ({
+            id: cr.id,
+            numero: cr.numero,
+            monto: Number(cr.monto),
+            vencimiento: cr.vencimiento,
+            pagada: cr.pagada,
+            fechaPago: cr.fechaPago,
+          })),
         })),
       }
     })

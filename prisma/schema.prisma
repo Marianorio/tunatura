@@ -22,6 +22,7 @@ model User {
   products  Product[]
   customers Customer[]
   orders    Order[]
+  cajas     Caja[]
 }
 
 model Account {
@@ -78,6 +79,7 @@ model Product {
 
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
+  cajaItems  CajaItem[]
 }
 
 model Customer {
@@ -110,6 +112,21 @@ model Order {
   customer Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
   user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items    OrderItem[]
+  cuotaRecords Cuota[]
+}
+
+model Cuota {
+  id         String   @id @default(cuid())
+  orderId    String
+  numero     Int
+  monto      Decimal  @db.Decimal(10, 2)
+  vencimiento DateTime
+  pagada     Boolean  @default(false)
+  fechaPago  DateTime?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, numero])
 }
 
 model OrderItem {
@@ -124,4 +141,27 @@ model OrderItem {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([orderId, productId])
+}
+
+model Caja {
+  id            String   @id @default(cuid())
+  nombre        String
+  fechaRecibida DateTime @default(now())
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CajaItem[]
+}
+
+model CajaItem {
+  id               String    @id @default(cuid())
+  cajaId           String
+  productId        String
+  cantidad         Int
+  fechaVencimiento DateTime?
+
+  caja    Caja    @relation(fields: [cajaId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }

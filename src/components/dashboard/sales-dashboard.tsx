@@ -21,6 +21,8 @@ import {
   XCircle,
   Award,
   ChevronRight,
+  AlertTriangle,
+  Calendar,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -99,14 +101,26 @@ function KpiCard({ title, value, description, icon, accent }: { title: string; v
   )
 }
 
+type RiskyCustomer = {
+  id: string
+  name: string
+  totalDebt: number
+  overdueCuotas: number
+  pendingCuotas: number
+  oldestOrderAgeDays: number
+  riskScore: number
+}
+
 export function SalesDashboard({
   orders,
   productCount,
   customerCount,
+  riskyCustomers = [],
 }: {
   orders: SerializedOrder[]
   productCount: number
   customerCount: number
+  riskyCustomers?: RiskyCustomer[]
 }) {
   const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
   const totalOrders = orders.length
@@ -373,7 +387,7 @@ export function SalesDashboard({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -408,6 +422,56 @@ export function SalesDashboard({
           ) : (
             <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
               Sin clientes aún
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">Clientes riesgosos</h3>
+              <p className="text-xs text-muted-foreground">Top 5 por riesgo de impago</p>
+            </div>
+            <AlertTriangle className="size-4 text-red-500 shrink-0" />
+          </div>
+          {riskyCustomers.length > 0 ? (
+            <div className="space-y-2">
+              {riskyCustomers.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-red-50/50 dark:hover:bg-red-950/10"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                      <AlertTriangle className="size-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{customer.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {customer.overdueCuotas > 0 && (
+                          <span className="text-red-500 font-medium">{customer.overdueCuotas} vencida{customer.overdueCuotas !== 1 ? "s" : ""}</span>
+                        )}
+                        {customer.overdueCuotas > 0 && customer.pendingCuotas > 0 && " · "}
+                        {customer.pendingCuotas > 0 && (
+                          <span>{customer.pendingCuotas} pendiente{customer.pendingCuotas !== 1 ? "s" : ""}</span>
+                        )}
+                        {customer.overdueCuotas === 0 && customer.pendingCuotas === 0 && "Sin cuotas"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <p className="text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(customer.totalDebt)}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
+                      <Calendar className="size-3" />
+                      {customer.oldestOrderAgeDays}d
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              Sin clientes riesgosos
             </div>
           )}
         </div>
