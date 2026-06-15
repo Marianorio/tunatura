@@ -4,23 +4,54 @@ import { signIn } from "next-auth/react"
 import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants"
 import { Loader2 } from "lucide-react"
 
 export function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [isCredentialsLoading, setIsCredentialsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   async function handleGoogleSignIn() {
-    setIsLoading(true)
+    setIsGoogleLoading(true)
     setErrorMsg(null)
     try {
       await signIn("google", { callbackUrl: "/dashboard" })
     } catch (e) {
       setErrorMsg("Error al iniciar sesión. Revisá la consola (F12).")
       console.error("signIn error:", e)
-      setIsLoading(false)
+      setIsGoogleLoading(false)
+    }
+  }
+
+  async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setIsCredentialsLoading(true)
+    setErrorMsg(null)
+
+    const form = new FormData(e.currentTarget)
+    const email = form.get("email") as string
+    const password = form.get("password") as string
+
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setErrorMsg("Email o contraseña incorrectos")
+        setIsCredentialsLoading(false)
+        return
+      }
+
+      window.location.href = "/dashboard"
+    } catch {
+      setErrorMsg("Error de conexión")
+      setIsCredentialsLoading(false)
     }
   }
 
@@ -87,19 +118,45 @@ export function LoginForm() {
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card p-8 shadow-sm">
+          <div className="rounded-xl border bg-card p-8 shadow-sm space-y-4">
             {errorMsg && (
-              <div className="mb-4 rounded-lg bg-destructive/10 px-4 py-2 text-xs text-destructive">
+              <div className="rounded-lg bg-destructive/10 px-4 py-2 text-xs text-destructive">
                 {errorMsg}
               </div>
             )}
+
+            <form onSubmit={handleCredentialsSubmit} className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" placeholder="tu@email.com" required />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Contraseña</Label>
+                </div>
+                <Input id="password" name="password" type="password" placeholder="••••••" required />
+              </div>
+              <Button type="submit" className="w-full h-11" disabled={isCredentialsLoading}>
+                {isCredentialsLoading ? <Loader2 className="size-4 animate-spin" /> : "Iniciar sesión"}
+              </Button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">O continuá con</span>
+              </div>
+            </div>
+
             <Button
               variant="outline"
               className="flex h-12 w-full items-center justify-center gap-3 rounded-lg border bg-card text-sm font-medium text-foreground transition-all hover:bg-muted hover:shadow-sm"
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
+              disabled={isGoogleLoading}
             >
-              {isLoading ? (
+              {isGoogleLoading ? (
                 <Loader2 className="size-5 animate-spin text-muted-foreground" />
               ) : (
                 <svg className="size-5 shrink-0" viewBox="0 0 24 24">
@@ -121,14 +178,14 @@ export function LoginForm() {
                   />
                 </svg>
               )}
-              <span>{isLoading ? "Iniciando sesión..." : "Continuar con Google"}</span>
+              <span>{isGoogleLoading ? "Iniciando sesión..." : "Continuar con Google"}</span>
             </Button>
           </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Al iniciar sesión aceptas nuestros{" "}
-            <a href="#" className="underline hover:text-primary">
-              Términos y condiciones
+            No tenés cuenta?{" "}
+            <a href="/register" className="font-medium text-primary underline-offset-4 hover:underline">
+              Registrarse
             </a>
           </p>
         </div>
