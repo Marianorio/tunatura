@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants"
 import { Loader2 } from "lucide-react"
 
 export function RegisterForm() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,11 +54,65 @@ export function RegisterForm() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="flex w-full items-center justify-center bg-background px-4">
+      <div className="relative hidden w-1/2 lg:block">
+        <div className="absolute inset-0 bg-gradient-to-br from-secondary to-secondary/80" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-white">
+          <div className="mb-6">
+            <Image
+              src="/tunaturalogo2.png"
+              alt={APP_NAME}
+              width={240}
+              height={240}
+              className="size-60 brightness-0 invert"
+            />
+          </div>
+          <h1 className="mb-3 text-center text-3xl font-bold tracking-tight">
+            {APP_NAME}
+          </h1>
+          <p className="max-w-md text-center text-lg text-white/70">
+            {APP_DESCRIPTION}
+          </p>
+          <div className="mt-12 grid grid-cols-3 gap-6 text-center">
+            <div>
+              <p className="text-2xl font-bold">Productos</p>
+              <p className="text-sm text-white/60">Catálogo inteligente</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold">Clientes</p>
+              <p className="text-sm text-white/60">Gestión simple</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold">Ventas</p>
+              <p className="text-sm text-white/60">Reportes claros</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-foreground">Crear cuenta</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Registrate para empezar</p>
+          <div className="mb-8 text-center lg:hidden">
+            <div className="mx-auto mb-4 flex items-center justify-center">
+              <Image
+                src="/tunaturalogo2.png"
+                alt={APP_NAME}
+                width={96}
+                height={96}
+                className="size-24 object-contain"
+              />
+            </div>
+            <h1 className="text-2xl font-bold text-primary">{APP_NAME}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{APP_DESCRIPTION}</p>
+          </div>
+
+          <div className="mb-8 text-center hidden lg:block">
+            <h2 className="text-2xl font-semibold text-foreground">
+              Crear cuenta
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Registrate para empezar
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="rounded-xl border bg-card p-8 shadow-sm space-y-4">
