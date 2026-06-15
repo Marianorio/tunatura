@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, XCircle, ArrowRight, LayoutDashboard, DollarSign, TrendingUp, Calendar, Box, CreditCard } from "lucide-react"
+import { ShoppingCart, Package, Users, Plus, AlertTriangle, Clock, CheckCircle2, ArrowRight, Calendar, Box, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -397,30 +397,6 @@ export function DashboardView({
         </Link>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm lg:hidden">
-        <div className="flex items-center justify-around py-1.5 px-2">
-          <Link href="/dashboard" className="flex flex-col items-center gap-0.5 text-[10px] text-primary font-medium">
-            <LayoutDashboard className="size-5" />
-            Inicio
-          </Link>
-          <Link href="/dashboard/products" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            <Package className="size-5" />
-            Productos
-          </Link>
-          <Link href="/dashboard/orders" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            <ShoppingCart className="size-5" />
-            Pedidos
-          </Link>
-          <Link href="/dashboard/debts" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            <DollarSign className="size-5" />
-            Deudas
-          </Link>
-          <Link href="/dashboard/sales" className="flex flex-col items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
-            <TrendingUp className="size-5" />
-            Ventas
-          </Link>
-        </div>
-      </div>
     </div>
   )
 }

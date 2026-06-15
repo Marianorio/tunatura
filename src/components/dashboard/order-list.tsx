@@ -242,7 +242,42 @@ export function OrderList({
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+        <>
+          <div className="grid gap-3 md:hidden">
+            {paginated.map((order) => {
+              const status = statusConfig[order.status] ?? statusConfig.pending
+              const StatusIcon = status.icon
+              return (
+                <div key={order.id} className="rounded-xl border bg-card p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-mono font-medium">{order.orderNumber}</span>
+                    </div>
+                    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0", status.bg, status.color)}>
+                      <StatusIcon className="size-3" />
+                      {status.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{order.customer.name}</p>
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                    {order.items.map((i) => i.product.name).join(", ")}
+                  </p>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <span className="text-sm font-semibold">${Number(order.total).toFixed(2)}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      onClick={() => handleDelete(order.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="hidden md:block overflow-x-auto rounded-xl border bg-card shadow-sm">
           <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b bg-muted/50">
@@ -325,6 +360,7 @@ export function OrderList({
             </tbody>
           </table>
         </div>
+        </>
       )}
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between gap-4 pt-2">

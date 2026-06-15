@@ -247,7 +247,63 @@ export function ProductList({ products: initial, initialCajas }: { products: Ser
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+        <>
+          <div className="grid gap-3 md:hidden">
+            {paginated.map((product) => (
+              <div key={product.id} className="rounded-xl border bg-card p-4 shadow-sm">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
+                    {product.image ? (
+                      <Image src={product.image} alt={product.name} fill className="object-cover" />
+                    ) : (
+                      <div className="flex size-full items-center justify-center">
+                        <ImageIcon className="size-5 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[product.sku, product.brand].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                    {product.category && (
+                      <p className="text-xs text-muted-foreground">{product.category}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold">${Number(product.price).toFixed(2)}</span>
+                  <span className={cn("text-sm", product.stock === 0 ? "text-red-600 font-medium" : product.stock <= 5 ? "text-amber-600 font-medium" : "")}>
+                    {product.stock === 0 && <AlertTriangle className="inline size-3.5 mr-1" />}
+                    {product.stock > 0 && product.stock <= 5 && <AlertTriangle className="inline size-3.5 mr-1" />}
+                    {product.stock} uds.
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <Badge
+                    variant={product.isActive ? "default" : "secondary"}
+                    className="cursor-pointer"
+                    onClick={() => handleToggleStatus(product.id)}
+                  >
+                    {product.isActive ? "Activo" : "Inactivo"}
+                  </Badge>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="size-8" onClick={() => openEdit(product)}>
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="size-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      onClick={() => handleDelete(product.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden md:block overflow-x-auto rounded-xl border bg-card shadow-sm">
           <table className="w-full min-w-[550px]">
             <thead>
               <tr className="border-b bg-muted/50">
@@ -349,6 +405,7 @@ export function ProductList({ products: initial, initialCajas }: { products: Ser
             </tbody>
           </table>
         </div>
+        </>
       )}
       {filtered.length > PAGE_SIZE && (
         <div className="flex items-center justify-between gap-4 pt-2">

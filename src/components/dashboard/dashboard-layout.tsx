@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Sidebar, type NavItem } from "@/components/layout/sidebar"
 import { Navbar } from "@/components/layout/navbar"
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav"
 import { cn } from "@/lib/utils"
 
 export function DashboardLayout({
@@ -35,7 +36,8 @@ export function DashboardLayout({
           sidebarCollapsed={sidebarCollapsed}
           onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
         />
-        <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pb-16 md:pb-0">{children}</main>
+        <MobileBottomNav />
       </div>
     </div>
   )
