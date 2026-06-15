@@ -108,46 +108,38 @@ export function Sidebar({
         </nav>
       </ScrollArea>
 
-      <Separator />
-      <div className={cn("p-2", collapsed && "flex justify-center")}>
-        {collapsed ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-10"
-            onClick={onToggle}
-            aria-label="Expand sidebar"
-            title="Expandir"
-          >
-            <svg
-              className="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 px-3 text-sm font-normal"
-            onClick={onToggle}
-          >
-            <svg
-              className="size-4 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            <span>Contraer</span>
-          </Button>
-        )}
-      </div>
+      {onToggle && (
+        <>
+          <Separator />
+          <div className={cn("p-2", collapsed && "flex justify-center")}>
+            {collapsed ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10"
+                onClick={onToggle}
+                aria-label="Expand sidebar"
+                title="Expandir"
+              >
+                <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 px-3 text-sm font-normal"
+                onClick={onToggle}
+              >
+                <svg className="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+                <span>Contraer</span>
+              </Button>
+            )}
+          </div>
+        </>
+      )}
     </aside>
   )
 }
